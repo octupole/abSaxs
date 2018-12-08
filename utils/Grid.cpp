@@ -5,7 +5,7 @@
  *      Author: marchi
  */
 
-#include "Grid.h"
+#include "../utils/Grid.h"
 
 template <unsigned int Ndim> const rvec Grid<Ndim>::cube[VERTEX]={{0,0,0},{1,0,0},{0,1,0},{0,0,1},{1,1,0},{1,0,1},{0,1,1},{1,1,1}};
 template <unsigned int Ndim> int Grid<Ndim>::SetNo=0;

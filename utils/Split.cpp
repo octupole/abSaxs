@@ -5,7 +5,7 @@
  *      Author: marchi
  */
 
-#include "Split.h"
+#include "../utils/Split.h"
 const string toErase{"\t \n"};
 vector<string> split(const string & s){
 	std::stringstream iss(s);

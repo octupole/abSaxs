@@ -8,15 +8,16 @@
 #ifndef GRID_H_
 #define GRID_H_
 //#include "vec.h"
-#include "Array.h"
 #include <cstdlib>
 #include <cmath>
-#include "MyVec.h"
 #include <vector>
 #include <string>
 #include <sstream>
-#include "MyUtilClass.h"
 #include <complex>
+
+#include "../utils/Array.h"
+#include "../utils/MyUtilClass.h"
+#include "../utils/MyVec.h"
 using Complex=std::complex<double>;
 
 

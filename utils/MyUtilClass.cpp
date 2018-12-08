@@ -6,7 +6,7 @@
  */
 
 
-#include "MyUtilClass.h"
+#include "../utils/MyUtilClass.h"
 namespace DVECT{
 
 using namespace MATRIX;

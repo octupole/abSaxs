@@ -5,7 +5,7 @@
  *      Author: marchi
  */
 
-#include "Spline1DInterpolant.h"
+#include "../utils/Spline1DInterpolant.h"
 
 namespace Spline1D {
 Spline1DInterpolant::Spline1DInterpolant(vector<double> xx, vector<double> yy){

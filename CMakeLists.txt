@@ -119,9 +119,13 @@ add_subdirectory(fftw3pp)
 add_subdirectory(comm)
 add_subdirectory(utils)
 add_subdirectory(alglib)
+add_subdirectory(Execute)
 
 add_executable(abSaxs abSaxs.cpp)
-target_link_libraries(abSaxs fftw3pp comm utils )
+
+target_include_directories(abSaxs PUBLIC "${PROJECT_SOURCE_DIR}/Execute")
+
+target_link_libraries(abSaxs fftw3pp comm utils Execute alglib)
 
 if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     set (CMAKE_INSTALL_PREFIX "$ENV{HOME}" CACHE PATH "default install path" FORCE )

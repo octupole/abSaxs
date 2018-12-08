@@ -5,10 +5,17 @@
  *      Author: marchi
  */
 #include <iostream>
+#include "TrjRead.h"
 using std::cout;
 using std::endl;
 
-int main(int argn, char *argv[]){
+int main(int argc, char *argv[]){
+	/**
+	 * read input
+	 */
+	trj::TrjRead MyIn(argc,argv);
+	MyIn.Input();
+
   cout << "Ula " <<endl;
 }
 

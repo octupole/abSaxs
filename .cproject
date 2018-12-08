@@ -56,6 +56,14 @@
 					<def name="CMAKE_C_COMPILER" type="STRING" val="gcc"/>
 					<def name="CMAKE_CXX_COMPILER" type="STRING" val="g++"/>
 				</defs>
+				<linux command="cmake" generator="UnixMakefiles" use-default="true">
+					<defs/>
+					<undefs/>
+				</linux>
+				<win32 command="cmake" generator="MinGWMakefiles" use-default="true">
+					<defs/>
+					<undefs/>
+				</win32>
 			</storageModule>
 		</cconfiguration>
 	</storageModule>
@@ -78,4 +86,5 @@
 			<resource resourceType="PROJECT" workspacePath="/abSaxs"/>
 		</configuration>
 	</storageModule>
+	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 </cproject>

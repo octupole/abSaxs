@@ -5,7 +5,7 @@ cmake_minimum_required( VERSION 3.0)
 # Project name
 project(abSaxs CXX C)
 
-
+set(CMAKE_VERBOSE_MAKEFILE OFF)
 include(${CMAKE_SOURCE_DIR}/cmake/macros.cmake)
 
 # Adds GreatCMakeCookOff to module paths

@@ -48,13 +48,9 @@
 			</storageModule>
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule buildDir="build" moduleId="de.marw.cdt.cmake.core.settings">
-				<linux command="cmake" generator="UnixMakefiles" use-default="true">
-					<defs/>
-					<undefs/>
+				<linux command="/usr/local/bin/cmake" generator="UnixMakefiles">
 				</linux>
 				<win32 command="cmake" generator="MinGWMakefiles" use-default="true">
-					<defs/>
-					<undefs/>
 				</win32>
 				<options/>
 				<defs>

@@ -49,21 +49,21 @@ void TrjRead::Input(){
 			ftest.open(filein.c_str(),ios::in);
 			if(!ftest) throw string("\n Cannot open " + filein + "!!\n");
 			ftest.close();
-			fin=ifstream(filein.c_str(),ios::in);
+			finx=new ifstream(filein.c_str(),ios::in);
 		}
 		if(!inmap["-o"].empty()) {
 			if(inmap["-o"].size() < 2) throw string("\n filename expected for " + inmap["-o"][0] + " option \n");
 			if(inmap["-o"].size() > 2) throw string("\n More than one entry for " + inmap["-o"][0] + " option \n");
 			fileout=inmap["-o"][1];
-			fout=ofstream(fileout.c_str(),ios::out);
+			foutx=new ofstream(fileout.c_str(),ios::out);
 		}
 	}catch(const string & s){
 		cout << s << endl;
 		exit(1);
 	}
 
-	gFin=&fin;
-	gFout=&fout;
+	gFin=finx;
+	gFout=foutx;
 }
 TrjRead::~TrjRead() {
 	// TODO Auto-generated destructor stub

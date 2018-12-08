@@ -57,8 +57,8 @@ public:
 using Dvect=DVECT::DDvect<double>;
 class TrjRead: public trjInput {
 	string filein,fileout{"abSaxs.out"};
-	ifstream fin;
-	ofstream fout;
+	ifstream * finx{nullptr};
+	ofstream * foutx{nullptr};
 public:
 	Values<string> gfilein{filein};
 	Values<string> gfileout{fileout};

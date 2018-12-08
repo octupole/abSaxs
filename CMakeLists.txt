@@ -125,7 +125,7 @@ add_executable(abSaxs abSaxs.cpp)
 
 target_include_directories(abSaxs PUBLIC "${PROJECT_SOURCE_DIR}/Execute")
 
-target_link_libraries(abSaxs fftw3pp comm utils Execute alglib)
+target_link_libraries(abSaxs fftw3pp comm Execute utils alglib)
 
 if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     set (CMAKE_INSTALL_PREFIX "$ENV{HOME}" CACHE PATH "default install path" FORCE )

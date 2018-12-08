@@ -1,5 +1,5 @@
-#ifndef __SGSMOOTH_HPP__
-#define __SGSMOOTH_HPP__
+#ifndef __SGSMOOTH_H__
+#define __SGSMOOTH_H__
 
 #include <vector>
 

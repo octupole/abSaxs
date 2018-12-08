@@ -9,3 +9,4 @@ endif()
 set(SOURCE Pfftw.cpp Prcfft3d.cpp Pcrfft3d.cpp)
 
 add_library(fftw3pp STATIC ${SOURCE})
+target_include_directories(fftw3pp PUBLIC "${PROJECT_SOURCE_DIR}/utils") 

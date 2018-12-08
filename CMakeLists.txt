@@ -112,19 +112,21 @@ ELSE(FFTW3_FOUND)
 endif (FFTW3_FOUND)
 
 LONG_TODAY(BUILD_DATE)
+
+include_directories("${PROJECT_SOURCE_DIR}/alglib/include")
   
-include_directories("include")
-include_directories("${PROJECT_SOURCE_DIR}/fftw3p")
-include_directories("fftw3pp")
 add_subdirectory(fftw3pp)
 add_subdirectory(comm)
+add_subdirectory(utils)
+add_subdirectory(alglib)
 
 add_executable(abSaxs abSaxs.cpp)
-target_link_libraries(abSaxs fftw3pp comm)
+target_link_libraries(abSaxs fftw3pp comm utils )
 
 if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     set (CMAKE_INSTALL_PREFIX "$ENV{HOME}" CACHE PATH "default install path" FORCE )
 endif()
+
 message( STATUS)
 message( STATUS "========== OpenTRJ Build Information ===========")
 message( STATUS "Current date/time .......... = ${BUILD_DATE}")

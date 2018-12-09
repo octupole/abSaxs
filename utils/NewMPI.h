@@ -71,6 +71,7 @@ const size_t one{1};
 
 template <>
 class Intracom<false>{
+	MPI_Comm * comm{nullptr};
 public:
 	Intracom(void *){};
 	int Get_size(){return one;}
@@ -84,6 +85,7 @@ public:
 	void Recv(...){};
 	void set(...){};
 	Intracom(){};
+	MPI_Comm * getComm(){return comm;};
 
 	virtual ~Intracom(){};
 };
@@ -92,6 +94,7 @@ class Intracom<true>{
 	MPI_Comm comm;
 public:
 	Intracom(MPI_Comm x):comm{x}{};
+	MPI_Comm & getComm(){return comm;};
 	void set(MPI_Comm x){
 		comm=x;
 	};
@@ -251,7 +254,8 @@ public:
 	template <typename T>
 	void Recv(int source,int dim, int tag, T * rbuffer);
 
-	MPI_Comm * Communicator(){ return &comm;}
+	MPI_Comm * Communicator(){ return &comm.getComm();}
+
 	void Finalize(){MPI_Finalize();};
 	virtual ~NewMPI(){MPI_Finalize();};
 };

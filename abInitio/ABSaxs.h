@@ -11,6 +11,7 @@
 #include "MyUtilClass.h"
 
 #include "Grid.h"
+#include <functional>
 using namespace MATRIX;
 using namespace DVECT;
 
@@ -22,7 +23,7 @@ class ABSaxs {
 	SaxsData * Exp{nullptr};
 	SaxsData * Calc{nullptr};
 	Matrix CO;
-	std::function<void(double)> metric=[this](double R,double c=3.0)
+	std::function<void(double)> metric=[this](double R,double c=6.0)
 			{CO[XX][XX]=R*c;CO[YY][YY]=R*c;CO[ZZ][ZZ]=R*c;};
 public:
 	ABSaxs();

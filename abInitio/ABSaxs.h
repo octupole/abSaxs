@@ -9,7 +9,7 @@
 #define ABINITIO_ABSAXS_H_
 #include "SaxsData.h"
 #include "MyUtilClass.h"
-
+#include "Ftypedefs.h"
 #include "Grid.h"
 #include <functional>
 using namespace MATRIX;
@@ -17,16 +17,20 @@ using namespace DVECT;
 
 
 namespace abinit{
+const double CellParam{3.5};
 class ABSaxs {
 	using Matrix=MMatrix<double>;
 	using Dvect=DDvect<double>;
 	SaxsData * Exp{nullptr};
 	SaxsData * Calc{nullptr};
-	Matrix CO;
-	std::function<void(double)> metric=[this](double R,double c=6.0)
-			{CO[XX][XX]=R*c;CO[YY][YY]=R*c;CO[ZZ][ZZ]=R*c;};
+	Matrix CO,co;
+	vector<unsigned int> grid{0,0,0};
+	double SuperCell{1.0};
+	std::function<void(double)> metric=[this](double R,double c=CellParam)
+			{co[XX][XX]=R*c;co[YY][YY]=R*c;co[ZZ][ZZ]=R*c;CO=SuperCell*co;};
 public:
-	ABSaxs();
+	ABSaxs()=delete;
+	ABSaxs(uint, uint, uint, double);
 	void setUp(SaxsData *);
 	void setUp();
 	void Run();

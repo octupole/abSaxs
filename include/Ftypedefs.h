@@ -10,13 +10,15 @@
 #include <cstdlib>
 
 #define DIM 3
-#define XX 0
-#define YY 1
-#define ZZ 2
+
 enum {Slt, Sol, Ions};
 const double unit_nm=0.1;
 const double unit_amu=1.66053892e-27;
 const double unit_rho=unit_amu/1.0e-24;
+
+const unsigned int XX{0};
+const unsigned int YY{1};
+const unsigned int ZZ{2};
 
 
 namespace Typedefs{

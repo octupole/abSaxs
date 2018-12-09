@@ -57,13 +57,21 @@ public:
 using Dvect=DVECT::DDvect<double>;
 class TrjRead: public trjInput {
 	string filein,fileout{"abSaxs.out"};
+	double SuperCellSide{1.0};
+	unsigned int nnx{128},nny{128},nnz{128};
 	ifstream * finx{nullptr};
 	ofstream * foutx{nullptr};
 public:
 	Values<string> gfilein{filein};
 	Values<string> gfileout{fileout};
+	Values<double> gSupCell{SuperCellSide};
 	Streams<ifstream> gFin;
 	Streams<ofstream> gFout;
+	Values<unsigned int> gnnx{nnx};
+	Values<unsigned int> gnny{nny};
+	Values<unsigned int> gnnz{nny};
+
+
 
 	TrjRead(int nv,char ** v);
 	void Input();

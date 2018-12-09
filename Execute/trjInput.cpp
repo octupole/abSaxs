@@ -12,14 +12,19 @@ trjInput::trjInput(int ntot,char ** v) {
 	vector<string> in;
 
 	inmap["-o"]=in;
-	inmap["-in"]=in;
+	inmap["-i"]=in;
+	inmap["-supcell"]=in;
+	inmap["-grid"]=in;
 
 	map<string,vector<string> >::iterator it=inmap.begin();
 	for(int n=0;it!=inmap.end();++it,n++){
 		Usage[n]=" ";
 	}
-	Usage[0]="\t -o fileout \n";
-	Usage[1]="\t -in filein \n";
+	int M{0};
+	Usage[M++]="\t -o fileout \n";
+	Usage[M++]="\t -i filein \n";
+	Usage[M++]="\t -supcell filein \n";
+	Usage[M++]="\t -grid filein \n";
 	int n=1;
 	string key;
 	for(;n<ntot;){

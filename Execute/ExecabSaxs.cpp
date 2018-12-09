@@ -10,7 +10,7 @@
 ExecabSaxs::ExecabSaxs(trj::TrjRead & MyIn) {
 	ExIn=MyIn.gFin();
 	ExOut=MyIn.gFout();
-	myABSaxs=new abinit::ABSaxs();
+	myABSaxs=new abinit::ABSaxs(MyIn.gnnx(),MyIn.gnny(),MyIn.gnnz(),MyIn.gSupCell());
 }
 void ExecabSaxs::Run_abSaxs(){
 	this->expSaxs();

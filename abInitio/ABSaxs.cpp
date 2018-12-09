@@ -7,8 +7,9 @@
 
 #include "ABSaxs.h"
 namespace abinit{
-ABSaxs::ABSaxs() {
-}
+
+ABSaxs::ABSaxs(uint nx, uint ny, uint nz, double SupCell=3.0): grid{nx,ny,nz},
+		SuperCell{SupCell} {}
 
 void ABSaxs::setUp(SaxsData * exp){
 	double Rg=exp->getRg();

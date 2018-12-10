@@ -23,12 +23,12 @@ class ABSaxs {
 	using Dvect=DDvect<double>;
 	SaxsData * Exp{nullptr};
 	SaxsData * Calc{nullptr};
-	Matrix CO,co;
-	vector<uint> grid_a;
-	vector<uint> grid_b;
+	Matrix CO{0},co{0};
+	vector<uint> grid_a{3};
+	vector<uint> grid_b{3};
 	double SuperCell{1.0};
 	std::function<void(double)> metric=[this](double R,double c=CellParam)
-			{co[XX][XX]=R*c;co[YY][YY]=R*c;co[ZZ][ZZ]=R*c;CO=SuperCell*co;};
+			{co[XX][XX]=R*c;co[YY][YY]=R*c;co[ZZ][ZZ]=R*c;cout << co[XX][XX] <<endl;CO=SuperCell*co;};
 public:
 	ABSaxs()=delete;
 	ABSaxs(uint, uint, uint, double);

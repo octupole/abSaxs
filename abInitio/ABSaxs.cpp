@@ -8,14 +8,26 @@
 #include "ABSaxs.h"
 namespace abinit{
 
-ABSaxs::ABSaxs(uint nx, uint ny, uint nz, double SupCell=3.0): grid{nx,ny,nz},
-		SuperCell{SupCell} {}
+ABSaxs::ABSaxs(uint nx, uint ny, uint nz, double SupCell=3.0): grid_a{nx,ny,nz},
+		SuperCell{SupCell} {
+
+		}
 
 void ABSaxs::setUp(SaxsData * exp){
 	double Rg=exp->getRg();
 	double Rd=exp->Rd();
 	metric(Rd);
-	cout << CO[XX][XX] <<endl;
+	auto cell=[this](uint n){return (uint) (double) n/SuperCell;};
+
+	grid_b[XX]=cell(grid_a[XX]);
+	grid_b[YY]=cell(grid_a[YY]);
+	grid_b[ZZ]=cell(grid_a[ZZ]);
+	cout << CO <<endl;
+
+	CO[XX][XX]=(co[XX][XX]/(double) grid_b[XX])*(double) grid_a[XX];
+	CO[YY][YY]=(co[YY][YY]/(double) grid_b[YY])*(double) grid_a[YY];
+	CO[ZZ][ZZ]=(co[ZZ][ZZ]/(double) grid_b[ZZ])*(double) grid_a[ZZ];
+	cout << CO <<endl;
 }
 void ABSaxs::Run(){
 

@@ -14,7 +14,7 @@
 #include <functional>
 using namespace MATRIX;
 using namespace DVECT;
-
+using uint=unsigned int;
 
 namespace abinit{
 const double CellParam{3.5};
@@ -24,7 +24,8 @@ class ABSaxs {
 	SaxsData * Exp{nullptr};
 	SaxsData * Calc{nullptr};
 	Matrix CO,co;
-	vector<unsigned int> grid{0,0,0};
+	vector<uint> grid_a;
+	vector<uint> grid_b;
 	double SuperCell{1.0};
 	std::function<void(double)> metric=[this](double R,double c=CellParam)
 			{co[XX][XX]=R*c;co[YY][YY]=R*c;co[ZZ][ZZ]=R*c;CO=SuperCell*co;};

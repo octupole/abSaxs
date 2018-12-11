@@ -10,12 +10,12 @@ namespace abinit{
 
 ABSaxs::ABSaxs(uint nx, uint ny, uint nz, double SupCell=3.0): grid_a{nx,ny,nz},
 		SuperCell{SupCell} {
-			cout << SuperCell<< " " << grid_a[XX]<<endl;
 		}
 
 void ABSaxs::setUp(SaxsData * exp){
 	double Rg=exp->getRg();
 	double Rd=exp->Rd();
+	cout << "Found Rg = "<< Rg << " " <<"Rd = "<<Rd<<endl;
 	metric(Rd);
 	std::function<uint(uint)> cell=[this](uint n){double tmp=(double) n/SuperCell;
 		uint tmp0=(uint) tmp;return tmp0;};

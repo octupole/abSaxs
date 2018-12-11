@@ -28,7 +28,7 @@ class ABSaxs {
 	vector<uint> grid_b{3};
 	double SuperCell{1.0};
 	std::function<void(double)> metric=[this](double R,double c=CellParam)
-			{co[XX][XX]=R*c;co[YY][YY]=R*c;co[ZZ][ZZ]=R*c;cout << co[XX][XX] <<endl;CO=SuperCell*co;};
+			{co[XX][XX]=R*c;co[YY][YY]=R*c;co[ZZ][ZZ]=R*c;CO=SuperCell*co;};
 public:
 	ABSaxs()=delete;
 	ABSaxs(uint, uint, uint, double);

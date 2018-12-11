@@ -14,6 +14,7 @@
 #include "interpolation.h"
 #include "SGSmooth.h"
 #include <functional>
+#include <algorithm>
 
 using std::vector;
 using std::tuple;

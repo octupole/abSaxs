@@ -8,26 +8,23 @@
 #include "SaxsData.h"
 
 SaxsData::SaxsData(vector<double> & x,vector<double> & y) {
-//	this->x=vector<tuple<double,double>>(x.size());
-//	for(size_t o{0};o<x.size();o++){
-//		this->x[o]=std::make_tuple(x[o],y[o]);
-//	}
+
 	this->Generate(x,y);
 }
 
 void SaxsData::Generate(vector<double> & x,vector<double> & y){
-	const int w{100},deg{6};
-	double qcut{0.06};
-	real_1d_array xd,yd,a2;
+	const int W{100},DEG{6};
+	const int SEGM{10},SKIP{5};
+	double qcut{0.07};
 	ae_int_t basisFuncs{2};
-	double t{2},v;
 	ae_int_t info;
 	barycentricinterpolant p;
 	polynomialfitreport rep;
 	size_t regrMax{0};
 
 	vector<double> y_s;
-	y_s=sg_smooth(y,w,deg);
+	y_s=sg_smooth(y,W,DEG);
+
 	this->x=vector<tuple<double,double>>(x.size());
 	for(size_t o{0};o<x.size();o++){
 		this->x[o]=std::make_tuple(x[o],y_s[o]);
@@ -36,26 +33,42 @@ void SaxsData::Generate(vector<double> & x,vector<double> & y){
 	for( auto x0: x){
 		if(x0 <= qcut) regrMax++;
 	}
-	regrMax-=2;
 	size_t mm{regrMax};
 
-	xd.setlength(mm);
-	yd.setlength(mm);
-	for(int o=0;o<mm;o++){
-		xd[o]=x[o+2]*x[o+2];
-		yd[o]=log(y_s[o+2]);
+	int M{(int) mm-SEGM};
+	int Mtime{M/SKIP};
+
+	vector<double> Rg_s,err0;
+	for(int o{0};o< M;o+=SKIP){
+		double Rg{0};
+		ae_int_t basisFuncs{2};
+		double t{2},v;
+		ae_int_t info;
+		barycentricinterpolant p;
+		polynomialfitreport rep;
+		real_1d_array a2;
+		real_1d_array xd,yd;
+		int iBeg{o},iEnd{o+SEGM};
+		int n{0};
+		xd.setlength(iEnd-iBeg+1);
+		yd.setlength(iEnd-iBeg+1);
+		for(int p{iBeg};p<=iEnd;p++,n++){
+			xd[n]=x[p]*x[p];
+			yd[n]=log(y_s[p]);
+		}
+		polynomialfit(xd, yd, basisFuncs, info, p, rep);
+
+		v = barycentriccalc(p, t);
+
+		polynomialbar2pow(p, a2);
+
+		Rg=sqrt(-3.0*a2[1]);
+		Rg_s.push_back(Rg);
+		err0.push_back(rep.avgerror);
 	}
-	polynomialfit(xd, yd, basisFuncs, info, p, rep);
+	auto it=std::min_element(err0.begin(),err0.end());
+	Rg=Rg_s[std::distance(err0.begin(),it)];
 
-	v = barycentriccalc(p, t);
-
-	polynomialbar2pow(p, a2);
-	for(auto o{0};o<a2.length();o++)
-		std::cout << a2[o]<< " ";
-	Rg=sqrt(-3.0*a2[1]);
-	cout <<" Rg "<< Rg<< " " << Rd() <<endl;
-
-//	cout << *this;
 }
 
 tuple<double,double> & SaxsData::operator [](size_t N){

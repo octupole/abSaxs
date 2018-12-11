@@ -10,7 +10,7 @@
 #include "SaxsData.h"
 #include "MyUtilClass.h"
 #include "Ftypedefs.h"
-#include "Grid.h"
+#include "RhoSaxs.h"
 #include <functional>
 using namespace MATRIX;
 using namespace DVECT;
@@ -29,6 +29,7 @@ class ABSaxs {
 	double SuperCell{1.0};
 	std::function<void(double)> metric=[this](double R,double c=CellParam)
 			{co[XX][XX]=R*c;co[YY][YY]=R*c;co[ZZ][ZZ]=R*c;CO=SuperCell*co;};
+	RhoSaxs Rho_in,Rho_s;
 public:
 	ABSaxs()=delete;
 	ABSaxs(uint, uint, uint, double);

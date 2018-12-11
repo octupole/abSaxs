@@ -29,7 +29,8 @@ void ABSaxs::setUp(SaxsData * exp){
 
 }
 void ABSaxs::Run(){
-
+	Rho_in.Allocate(grid_a[XX],grid_a[YY],grid_a[ZZ]);
+	Rho_s.Allocate(grid_b[XX],grid_b[YY],grid_b[ZZ]);
 }
 ABSaxs::~ABSaxs() {
 	// TODO Auto-generated destructor stub

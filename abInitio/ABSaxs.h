@@ -18,13 +18,16 @@
 #include <sstream>
 #include <map>
 #include <functional>
+#include <tuple>
 using namespace MATRIX;
 using namespace DVECT;
 using uint=unsigned int;
 using std::stringstream;
 using std::map;
+using std::tuple;
 namespace abinit{
 const double CellParam{3.5};
+
 class ABSaxs {
 	using Matrix=MMatrix<double>;
 	using Dvect=DDvect<double>;
@@ -53,6 +56,7 @@ class ABSaxs {
 	array3<Complex> I_k;
 	array3<Complex> Modulus(array3<Complex> &);
 	void __qhistogram();
+
 public:
 	ABSaxs()=delete;
 	ABSaxs(uint, uint, uint, double=1.0);

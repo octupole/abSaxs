@@ -6,7 +6,7 @@ if (NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release")
 endif()
 
-set(SOURCE ABSaxs.cpp RhoSaxs.cpp SaxsData.cpp)
+set(SOURCE ABSaxs.cpp RhoSaxs.cpp SaxsData.cpp Funktionell.cpp)
 add_library(absaxs STATIC ${SOURCE})
 
 target_include_directories(absaxs PUBLIC "${PROJECT_SOURCE_DIR}/Execute" "${PROJECT_SOURCE_DIR}/utils" 

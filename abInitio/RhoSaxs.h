@@ -73,6 +73,8 @@ public:
 	void setCO(Matrix CO){this->CO=CO;this->OC=this->CO.Inversion();__setDx();}
 	void CopySmallerRho(RhoSaxs &);
 	void MakeAvg();
+	Matrix & getCO(){return CO;}
+	Matrix & getOC(){return OC;}
 	virtual RhoSaxs & operator=(const double y){
 		this->Grid<1>::operator =(y);
 		return *this;

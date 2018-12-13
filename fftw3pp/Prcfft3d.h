@@ -12,12 +12,12 @@
 
 #include "Array.h"
 #include "Pfftw.h"
-namespace fftwpp{
+
+namespace Pfftwpp{
 class Prcfft3d: public Pfftw {
 	  unsigned int nx;
 	  unsigned int ny;
 	  unsigned int nz;
-
 public:
 	Prcfft3d(unsigned int nx, unsigned int ny, unsigned int nz, const Array::array3<double>& in,
 			const Array::array3<Complex>& out)
@@ -25,17 +25,14 @@ public:
 		Setup(in,out);
 	}
 
-
 	fftw_plan Plan(Complex *in, Complex *out) {
 
-		fftw_plan tmp= fftw_mpi_plan_dft_r2c_3d(nx,ny,nz,(double *) in,(fftw_complex *) out,MPI_COMM_WORLD,
+		return  fftw_mpi_plan_dft_r2c_3d(nx,ny,nz,(double *) in,(fftw_complex *) out,MPI_COMM_WORLD,
 				effort);
-
-		return tmp;
 	}
 
 	void Execute(Complex *in, Complex *out, bool shift=false) {
-		fftw_execute(plan);
+		fftw_execute_dft_r2c(plan,(double *) in,(fftw_complex *) out);
 	}
 
 };

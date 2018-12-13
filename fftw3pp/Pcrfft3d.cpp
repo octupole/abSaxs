@@ -5,9 +5,9 @@
  *      Author: marchi
  */
 
-#include "../fftw3pp/Pcrfft3d.h"
+#include "Pcrfft3d.h"
 
-namespace fftwpp {
+namespace Pfftwpp {
 
 
 } /* namespace fftwpp */

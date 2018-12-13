@@ -5,9 +5,9 @@
  *      Author: marchi
  */
 
-#include "../fftw3pp/Pfftw.h"
+#include "Pfftw.h"
 
-namespace fftwpp {
+namespace Pfftwpp {
 std::ifstream Pfftw::ifWisdom;
 std::ofstream Pfftw::ofWisdom;
 bool Pfftw::Wise=false;

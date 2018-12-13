@@ -11,11 +11,18 @@
 #include "MyUtilClass.h"
 #include "Ftypedefs.h"
 #include "RhoSaxs.h"
+#include "Prcfft3d.h"
+#include "Pcrfft3d.h"
+#include <mpi.h>
+
+#include <sstream>
+#include <map>
 #include <functional>
 using namespace MATRIX;
 using namespace DVECT;
 using uint=unsigned int;
-
+using std::stringstream;
+using std::map;
 namespace abinit{
 const double CellParam{3.5};
 class ABSaxs {
@@ -24,18 +31,34 @@ class ABSaxs {
 	SaxsData * Exp{nullptr};
 	SaxsData * Calc{nullptr};
 	Matrix CO{0},co{0};
+	Matrix OC{0},oc{0};
 	vector<uint> grid_a{3};
 	vector<uint> grid_b{3};
+	uint nx{0},ny{0},nz{0};
+	uint Nx{0},Ny{0},Nz{0};
+	uint nzp{0};
+	double dx{0},dy{0},dz{0},dvol{0};
+	double unitsR{10.0};
+	double unitsQ{1.0/unitsR};
+
+	double dq{0.002};
+	double qcut{1.0};
 	double SuperCell{1.0};
 	std::function<void(double)> metric=[this](double R,double c=CellParam)
 			{co[XX][XX]=R*c;co[YY][YY]=R*c;co[ZZ][ZZ]=R*c;CO=SuperCell*co;};
-	RhoSaxs Rho_in,Rho_s;
+	RhoSaxs * Rho_in{nullptr}, * Rho_s{nullptr};
+	array3<Complex> F_k;
+	array3<double> F_r;
+
+	array3<Complex> I_k;
+	array3<Complex> Modulus(array3<Complex> &);
+	void __qhistogram();
 public:
 	ABSaxs()=delete;
-	ABSaxs(uint, uint, uint, double);
+	ABSaxs(uint, uint, uint, double=1.0);
 	void setUp(SaxsData *);
-	void setUp();
 	void Run();
+	virtual void Minimize();
 	virtual ~ABSaxs();
 };
 }

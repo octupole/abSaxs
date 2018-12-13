@@ -5,6 +5,6 @@
  *      Author: marchi
  */
 
-#include "../fftw3pp/Prcfft3d.h"
+#include "Prcfft3d.h"
 
 

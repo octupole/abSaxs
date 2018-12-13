@@ -32,7 +32,7 @@ inline int GetWisdom(std::ifstream& s) {return s.get();}
 
 
 
-namespace fftwpp {
+namespace Pfftwpp {
 
 class Pfftw {
 protected:
@@ -87,7 +87,7 @@ public:
 	void Setup(double *in, Complex *out=NULL) {Setup((Complex *) in,out);}
 
 	void LoadWisdom() {
-		if(!rank){
+		if(rank == 0){
 			ifWisdom.open(WisdomName);
 			fftwpp_import_wisdom(GetWisdom,ifWisdom);
 			ifWisdom.close();

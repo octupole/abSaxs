@@ -23,8 +23,8 @@ trjInput::trjInput(int ntot,char ** v) {
 	int M{0};
 	Usage[M++]="\t -o fileout \n";
 	Usage[M++]="\t -i filein \n";
-	Usage[M++]="\t -supcell filein \n";
-	Usage[M++]="\t -grid filein \n";
+	Usage[M++]="\t -supcell <double l>\n";
+	Usage[M++]="\t -grid <double nx, [double ny, double nz] \n";
 	int n=1;
 	string key;
 	for(;n<ntot;){

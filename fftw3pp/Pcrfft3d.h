@@ -12,7 +12,7 @@
 
 #include "Pfftw.h"
 #include "Array.h"
-namespace fftwpp {
+namespace Pfftwpp {
 
 class Pcrfft3d: public Pfftw {
 	  unsigned int nx;
@@ -24,13 +24,13 @@ public:
 		Pfftw(out.Size(),nx*ny*nz), nx(nx), ny(ny), nz(nz) {Setup(in,out);}
 
 	fftw_plan Plan(Complex *in, Complex *out) {
-		fftw_plan tmp=fftw_mpi_plan_dft_c2r_3d(nx,ny,nz,(fftw_complex *) in,(double *) out,
+		return fftw_mpi_plan_dft_c2r_3d(nx,ny,nz,(fftw_complex *) in,(double *) out,
 		                                MPI_COMM_WORLD,effort);
-	return tmp;
 }
 
 void Execute(Complex *in, Complex *out, bool shift=false) {
-	fftw_execute(plan);
+	    fftw_execute_dft_c2r(plan,(fftw_complex *) in,(double *) out);
+
 }
 
 };

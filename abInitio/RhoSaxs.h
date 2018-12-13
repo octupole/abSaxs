@@ -65,7 +65,7 @@ public:
 
 	void Density();
 	virtual void Write();
-	virtual ~RhoSaxs();
+	virtual ~RhoSaxs(){}x;
 };
 }
 #endif /* SRC_RHOSAXS_H_ */

@@ -25,11 +25,11 @@ void SaxsData::Generate(vector<double> & x,vector<double> & y){
 	vector<double> y_s;
 	y_s=sg_smooth(y,W,DEG);
 
-	this->x=vector<tuple<double,double>>(x.size());
+	this->x=vector<std::pair<double,double>>(x.size());
 	for(size_t o{0};o<x.size();o++){
-		this->x[o]=std::make_tuple(x[o],y_s[o]);
+		this->x[o].first=x[o];
+		this->x[o].second=y_s[o];
 	}
-
 	for( auto x0: x){
 		if(x0 <= qcut) regrMax++;
 	}
@@ -71,7 +71,7 @@ void SaxsData::Generate(vector<double> & x,vector<double> & y){
 
 }
 
-tuple<double,double> & SaxsData::operator [](size_t N){
+std::pair<double,double> & SaxsData::operator [](size_t N){
 	return x.at(N);
 }
 

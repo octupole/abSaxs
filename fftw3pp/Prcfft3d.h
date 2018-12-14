@@ -32,7 +32,7 @@ public:
 	}
 
 	void Execute(Complex *in, Complex *out, bool shift=false) {
-		fftw_execute_dft_r2c(plan,(double *) in,(fftw_complex *) out);
+		fftw_execute(plan);
 	}
 
 };

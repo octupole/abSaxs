@@ -42,6 +42,7 @@ void ABSaxs::setUp(SaxsData * exp){
 
 	Rho_in->initDensity(Rd);
 	Rho_s->CopySmallerRho(*Rho_in);
+	myFuncx=new Funkll::Funktionell(Rho_s,Rho_in,exp);
 
 	ptrdiff_t alloc_local, local_n0, local_0_start;
 
@@ -52,11 +53,12 @@ void ABSaxs::setUp(SaxsData * exp){
 	F_r.Allocate(grid_b[XX],grid_b[YY],nzp*2);
 	I_k.Allocate(grid_b[XX],grid_b[YY],nzp);
 	cout << "Run with Rho_inner ="<< Nx<<" "<< Ny<<" "<< Nz<<" Resolution "<< co[XX][XX]/(float) Nx<<endl;
+	cout << co;
 	cout << "Run with Rho_outer ="<< nx<<" "<< ny<<" "<< nz<<" "<<endl;
+	cout << CO;
 }
 void ABSaxs::Run(){
 	Minimize();
-
 }
 array3<Complex> ABSaxs::Modulus(array3<Complex> & ro_k){
 	array3<Complex> ro_k1(nx,ny,nzp);
@@ -77,13 +79,15 @@ void ABSaxs::Minimize(){
 	 */
 	Pfftwpp::Pcrfft3d Backward3(nx,ny,nz,F_k,F_r);
 	Pfftwpp::Prcfft3d  Forward3(nx,ny,nz,F_r,F_k);
+	Funkll::Funktionell & myFunc=*myFuncx;
 
 	Rho_s->copyOut(F_r);
 	F_r*=dvol;
 
 	Forward3.fft(F_r,F_k);
-	I_k=Modulus(F_k);
-	__qhistogram();
+	double E=myFunc.Deviate(F_k);
+	cout << E << endl;
+
 }
 
 void ABSaxs::__qhistogram(){

@@ -29,7 +29,7 @@ public:
 }
 
 void Execute(Complex *in, Complex *out, bool shift=false) {
-	    fftw_execute_dft_c2r(plan,(fftw_complex *) in,(double *) out);
+	    fftw_execute(plan);
 
 }
 

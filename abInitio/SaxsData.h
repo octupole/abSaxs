@@ -8,7 +8,7 @@
 #ifndef UTILS_SAXSDATA_H_
 #define UTILS_SAXSDATA_H_
 #include <vector>
-#include <tuple>
+#include <utility>
 #include <fstream>
 #include <iostream>
 #include "interpolation.h"
@@ -17,7 +17,6 @@
 #include <algorithm>
 
 using std::vector;
-using std::tuple;
 using std::ostream;
 using std::ifstream;
 using std::endl;
@@ -25,7 +24,7 @@ using std::cout;
 using namespace alglib;
 
 class SaxsData {
-	vector<tuple<double,double>> x;
+	vector<std::pair<double,double>> x;
 	double Rg{0};
 	void Generate(vector<double> & ,vector<double> &);
 public:
@@ -33,7 +32,8 @@ public:
 	double getRg(){return Rg;}
 	SaxsData(vector<double> &,vector<double> &);
 	SaxsData()=delete;
-	tuple<double,double> & operator[](size_t);
+	std::pair<double,double> & operator[](size_t);
+	vector<std::pair<double,double>> & gIq_exp(){return x;}
 	virtual ~SaxsData();
 	friend ostream & operator<<(ostream &, SaxsData &);
 

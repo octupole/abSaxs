@@ -13,6 +13,7 @@
 #include "RhoSaxs.h"
 #include "Prcfft3d.h"
 #include "Pcrfft3d.h"
+#include "Funktionell.h"
 #include <mpi.h>
 
 #include <sstream>
@@ -55,6 +56,7 @@ class ABSaxs {
 
 	array3<Complex> I_k;
 	array3<Complex> Modulus(array3<Complex> &);
+	Funkll::Funktionell * myFuncx{nullptr};
 	void __qhistogram();
 
 public:

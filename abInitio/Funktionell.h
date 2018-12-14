@@ -38,18 +38,20 @@ class Funktionell {
 	double qcut{1.0};
 	map<size_t,std::pair<double,size_t>> Iq_c;
 	map<size_t,double> Iq_exp;
-	map<size_t,vector<vector<int>>> vInt;
-	map<size_t,vector<DDvect<double>>> vDble;
+	map<size_t,vector<vector<int>>> mapIdx;
+	map<size_t,vector<DDvect<double>>> mapVec;
 
-	array3<Complex> Grad;
-	double Scaling{1};
+	double Scaling{0};
+	double Gscaling{0};
 	void setUpFirst(SaxsData *);
 	array3<Complex> Modulus(array3<Complex> &);
-
+	double Par{1.0e8};
 public:
 	Funktionell()=delete;
 	Funktionell(RhoSaxs *,RhoSaxs *,SaxsData *);
-	double Deviate(array3<Complex> &);
+	double Energy(array3<Complex> &);
+	double GradPar(){return Gscaling;}
+	double Deviate2(array3<Complex> &);
 	virtual ~Funktionell();
 };
 

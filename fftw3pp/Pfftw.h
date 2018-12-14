@@ -30,6 +30,8 @@ inline int fftwpp_import_wisdom(int (*g)(std::ifstream& s), std::ifstream &s)
 inline void PutWisdom(char c, std::ofstream& s) {s.put(c);}
 inline int GetWisdom(std::ifstream& s) {return s.get();}
 
+const size_t Calign{sizeof(Complex)};
+const size_t Ralign{sizeof(double)};
 
 
 namespace Pfftwpp {

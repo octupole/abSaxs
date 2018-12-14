@@ -49,9 +49,9 @@ void ABSaxs::setUp(SaxsData * exp){
      alloc_local = fftw_mpi_local_size_3d(nx, ny, nzp, MPI_COMM_WORLD,
                                             &local_n0, &local_0_start);
 
- 	F_k.Allocate(grid_b[XX],grid_b[YY],nzp);
-	F_r.Allocate(grid_b[XX],grid_b[YY],nzp*2);
-	I_k.Allocate(grid_b[XX],grid_b[YY],nzp);
+ 	F_k.Allocate(grid_b[XX],grid_b[YY],nzp,Calign);
+	F_r.Allocate(grid_b[XX],grid_b[YY],nzp*2,Ralign);
+	I_k.Allocate(grid_b[XX],grid_b[YY],nzp,Calign);
 	cout << "Run with Rho_inner ="<< Nx<<" "<< Ny<<" "<< Nz<<" Resolution "<< co[XX][XX]/(float) Nx<<endl;
 	cout << co;
 	cout << "Run with Rho_outer ="<< nx<<" "<< ny<<" "<< nz<<" "<<endl;
@@ -77,16 +77,26 @@ void ABSaxs::Minimize(){
 	/*
 	 * Arrays are destroyed while performing plan!!!
 	 */
-	Pfftwpp::Pcrfft3d Backward3(nx,ny,nz,F_k,F_r);
+	array3<double> GradR(nx,ny,nzp*2,sizeof(double));
+
 	Pfftwpp::Prcfft3d  Forward3(nx,ny,nz,F_r,F_k);
+	Pfftwpp::Pcrfft3d Backward3(nx,ny,nz,F_k,GradR);
 	Funkll::Funktionell & myFunc=*myFuncx;
 
 	Rho_s->copyOut(F_r);
 	F_r*=dvol;
 
+	auto time1=MPI_Wtime();
+
 	Forward3.fft(F_r,F_k);
-	double E=myFunc.Deviate(F_k);
-	cout << E << endl;
+	double E=myFuncx->Energy(F_k);
+
+
+	cout << E << " " <<endl;
+	Backward3.fft(F_k,GradR);
+	cout << E << " " << GradR[30][30][30]<<endl;
+	auto time2=MPI_Wtime();
+	cout << time2-time1<<endl;
 
 }
 

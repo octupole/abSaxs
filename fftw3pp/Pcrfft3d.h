@@ -29,8 +29,7 @@ public:
 }
 
 void Execute(Complex *in, Complex *out, bool shift=false) {
-	    fftw_execute(plan);
-
+	fftw_execute(plan);
 }
 
 };

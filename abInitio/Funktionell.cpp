@@ -64,25 +64,26 @@ void Funktionell::setUpFirst(SaxsData * exp){
 				mw=sqrt(mw1*mw1+mw2*mw2+mw3*mw3);
 				int h0=static_cast<int>(mw/dq);
 				if(mw<qcut){
-					vInt[h0].push_back(vector<int>{i,j,k});
-					vDble[h0].push_back(Dvect{mw1,mw2,mw3});
+					mapIdx[h0].push_back(vector<int>{i,j,k});
+					mapVec[h0].push_back(Dvect{mw1,mw2,mw3});
 					MM++;
 				}
 			}
 		}
 	}
 }
-
-double Funktionell::Deviate(array3<Complex> & F_k){
+double Funktionell::Energy(array3<Complex> & F_k){
+	array3<Complex> Grad(nx,ny,nzp,sizeof(Complex));
+	cout <<std::scientific<<endl;
 	auto InC=Modulus(F_k);
 	double energy{0};
 	size_t nfx{(nx % 2 == 0)? nx/2: nx/2+1},nfy{(ny % 2 == 0)? ny/2: ny/2+1}
 		,nfz{(nz % 2 == 0)? nz/2: nz/2+1};
 	double mw1,mw2,mw3,mw;
-	for(auto it=vInt.begin();it != vInt.end();it++){
+	for(auto it=mapIdx.begin();it != mapIdx.end();it++){
 		const size_t h0=it->first;
 		vector<vector<int>> & vIdx=it->second;
-		vector<Dvect> & vV=vDble[h0];
+		vector<Dvect> & vV=mapVec[h0];
 		for(size_t o{0};o<vIdx.size();o++){
 			int i=vIdx[o][XX];
 			int j=vIdx[o][YY];
@@ -111,14 +112,56 @@ double Funktionell::Deviate(array3<Complex> & F_k){
 		Iq_c[h0].first/=static_cast<double>(Iq_c[h0].second);
 	}
 	this->Scaling=it_e->second/it_c->second.first;
-
+	double Par2=sqrt(Par);
 	for(auto it=Iq_exp.begin();it!=Iq_exp.end();it++){
 		auto h0=it->first;
-		auto tmp=Iq_exp[h0]-Iq_c[h0].first*Scaling;
+		auto tmp=Par2*(Iq_exp[h0]-Iq_c[h0].first*Scaling);
 		energy+=tmp*tmp;
-		cout << h0*dq+0.5*dq << " "  <<std::scientific << Scaling*Iq_c[h0].first<< " " <<Iq_exp[h0]<<endl;
+		double grad=-4.0*tmp*Par*Scaling/static_cast<double>(Iq_c[h0].second);
+		Gscaling=-2.0*Par*tmp*Iq_c[h0].first;
+		for(size_t o{0}; o<mapIdx[h0].size();o++){
+			size_t i=mapIdx[h0][o][XX];
+			size_t j=mapIdx[h0][o][YY];
+			size_t k=mapIdx[h0][o][ZZ];
+			Grad[i][j][k]=grad*conj(F_k[i][j][k]);
+		}
+	}
+	F_k=Grad;
+	return energy;
+}
+
+double Funktionell::Deviate2(array3<Complex> & F_k){
+	auto InC=Modulus(F_k);
+	double energy{0};
+	size_t nfx{(nx % 2 == 0)? nx/2: nx/2+1},nfy{(ny % 2 == 0)? ny/2: ny/2+1}
+		,nfz{(nz % 2 == 0)? nz/2: nz/2+1};
+	double mw1,mw2,mw3,mw;
+	for(auto it=mapIdx.begin();it != mapIdx.end();it++){
+		const size_t h0=it->first;
+		vector<vector<int>> & vIdx=it->second;
+		vector<Dvect> & vV=mapVec[h0];
+		for(size_t o{0};o<vIdx.size();o++){
+			int i=vIdx[o][XX];
+			int j=vIdx[o][YY];
+			int k=vIdx[o][ZZ];
+			size_t ib=i==0?0:nx-i;
+			size_t jb=j==0?0:ny-j;
+			mw1=vV[o][XX];
+			mw2=vV[o][YY];
+			mw3=vV[o][ZZ];
+			mw=sqrt(mw1*mw1+mw2*mw2+mw3*mw3);
+			if(mw<qcut){
+				Complex v0=InC[i][j][k];
+				if(k != 0 && k != nzp-1){
+					Complex vt1=InC[ib][jb][k];
+					v0=0.5*(v0+vt1);
+				}
+				int h0=static_cast<int>(mw/dq);
+			}
+		}
 	}
 	return energy;
+
 }
 
 array3<Complex> Funktionell::Modulus(array3<Complex> & ro_k){

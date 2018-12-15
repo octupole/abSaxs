@@ -82,21 +82,39 @@ void ABSaxs::Minimize(){
 	Pfftwpp::Prcfft3d  Forward3(nx,ny,nz,F_r,F_k);
 	Pfftwpp::Pcrfft3d Backward3(nx,ny,nz,F_k,GradR);
 	Funkll::Funktionell & myFunc=*myFuncx;
+	cout << std::scientific <<endl;
 
 	Rho_s->copyOut(F_r);
 	F_r*=dvol;
-
 	auto time1=MPI_Wtime();
 
-	Forward3.fft(F_r,F_k);
-	double E=myFuncx->Energy(F_k);
-
-
-	cout << E << " " <<endl;
-	Backward3.fft(F_k,GradR);
-	cout << E << " " << GradR[30][30][30]<<endl;
+	double c=F_r[2][32][30];
+	double delta=0.2,eps=0.002;
+	double Beg{-delta*0.5};
+	double End{delta*0.5};
+	vector<double> ee{0,0,0};
+	int M{0};
+	for(auto o{Beg};o<=End;o+=delta*0.5){
+		F_r[2][32][30]=c+o;
+		cout<< "o = " << o <<endl;
+		Forward3.fft(F_r,F_k);
+		double E=myFuncx->Energy(scalePlot,Gscale,F_k);
+		ee[M++]=E;
+		Backward3.fft(F_k,GradR);
+		cout << "E =" << E<<endl;
+		cout <<"Grad " << GradR[2][32][30]<<endl;
+	}
+	cout << (ee[2]-ee[0])/delta<< endl;
 	auto time2=MPI_Wtime();
+
 	cout << time2-time1<<endl;
+	for(size_t o{0};o<Nx;o++)
+		for(size_t p{0};p<Ny;p++)
+			for(size_t q{0};q<Nz;q++){
+				if(GradR[o][p][q] > 1.0e-2)
+					cout << o<< " " <<p<< " " <<q<< " " <<GradR[o][p][q]<<endl;
+			}
+
 
 }
 

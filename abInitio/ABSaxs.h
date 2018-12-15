@@ -58,6 +58,8 @@ class ABSaxs {
 	array3<Complex> Modulus(array3<Complex> &);
 	Funkll::Funktionell * myFuncx{nullptr};
 	void __qhistogram();
+	double scalePlot{0};
+	double Gscale{0};
 
 public:
 	ABSaxs()=delete;

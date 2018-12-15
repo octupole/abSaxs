@@ -36,21 +36,19 @@ class Funktionell {
 	Matrix CO,OC,co,oc;
 	double dq{0.002};
 	double qcut{1.0};
-	map<size_t,std::pair<double,size_t>> Iq_c;
+	map<size_t,double> Iq_c;
 	map<size_t,double> Iq_exp;
 	map<size_t,vector<vector<int>>> mapIdx;
 	map<size_t,vector<DDvect<double>>> mapVec;
 
-	double Scaling{0};
-	double Gscaling{0};
 	void setUpFirst(SaxsData *);
 	array3<Complex> Modulus(array3<Complex> &);
-	double Par{1.0e8};
+	double Par{1.0e6};
 public:
 	Funktionell()=delete;
 	Funktionell(RhoSaxs *,RhoSaxs *,SaxsData *);
-	double Energy(array3<Complex> &);
-	double GradPar(){return Gscaling;}
+	double Energy(double &,double &,array3<Complex> &);
+	double Energy2(double &,double &,array3<Complex> &);
 	double Deviate2(array3<Complex> &);
 	virtual ~Funktionell();
 };

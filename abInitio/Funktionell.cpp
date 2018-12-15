@@ -6,8 +6,22 @@
  */
 
 #include "Funktionell.h"
-
+const double INEN{100.0};
 namespace Funkll {
+struct pickPar{
+	pickPar(double &Par, double & scl,map<size_t,double> & Ie,map<size_t,double> & Ic){
+		double energy{0};
+		auto i0=Ie.begin();
+		scl=Ie[i0->first]/Ic[i0->first];
+		for(auto it{Ie.begin()};it!=Ie.end();it++){
+			auto h0=it->first;
+			double tmp=Ie[h0]-Ic[h0]*scl;
+			energy+=tmp*tmp;
+		}
+		Par=INEN/energy;
+	}
+};
+
 
 Funktionell::Funktionell(RhoSaxs * ro_out, RhoSaxs * ro_in,SaxsData * exp){
 	CO=ro_out->getCO();
@@ -46,7 +60,7 @@ void Funktionell::setUpFirst(SaxsData * exp){
 	size_t nfx{(nx % 2 == 0)? nx/2: nx/2+1},nfy{(ny % 2 == 0)? ny/2: ny/2+1}
 		,nfz{(nz % 2 == 0)? nz/2: nz/2+1};
 	double mw1,mw2,mw3,mw;
-	size_t MM{0};
+
 	for(auto i=0;i<nx;i++){
 		int ia=(i<nfx)?i : i-nx;
 		size_t ib=i==0?0:nx-i;
@@ -65,68 +79,129 @@ void Funktionell::setUpFirst(SaxsData * exp){
 				int h0=static_cast<int>(mw/dq);
 				if(mw<qcut){
 					mapIdx[h0].push_back(vector<int>{i,j,k});
-					mapVec[h0].push_back(Dvect{mw1,mw2,mw3});
-					MM++;
 				}
 			}
 		}
 	}
 }
-double Funktionell::Energy(array3<Complex> & F_k){
+double Funktionell::Energy(double & scalePlot,double & Gscale,array3<Complex> & F_k){
 	array3<Complex> Grad(nx,ny,nzp,sizeof(Complex));
-	cout <<std::scientific<<endl;
+	Iq_c.clear();
 	auto InC=Modulus(F_k);
+	Complex vt0{0,0};
 	double energy{0};
-	size_t nfx{(nx % 2 == 0)? nx/2: nx/2+1},nfy{(ny % 2 == 0)? ny/2: ny/2+1}
-		,nfz{(nz % 2 == 0)? nz/2: nz/2+1};
-	double mw1,mw2,mw3,mw;
 	for(auto it=mapIdx.begin();it != mapIdx.end();it++){
 		const size_t h0=it->first;
 		vector<vector<int>> & vIdx=it->second;
-		vector<Dvect> & vV=mapVec[h0];
 		for(size_t o{0};o<vIdx.size();o++){
 			int i=vIdx[o][XX];
 			int j=vIdx[o][YY];
 			int k=vIdx[o][ZZ];
 			size_t ib=i==0?0:nx-i;
 			size_t jb=j==0?0:ny-j;
-			mw1=vV[o][XX];
-			mw2=vV[o][YY];
-			mw3=vV[o][ZZ];
-			mw=sqrt(mw1*mw1+mw2*mw2+mw3*mw3);
-			Complex v0=InC[i][j][k];
 			if(k != 0 && k != nzp-1){
-				Complex vt1=InC[ib][jb][k];
-				v0=0.5*(v0+vt1);
+				vt0=InC[i][j][k]+InC[ib][jb][k];
+			} else{
+				vt0=InC[i][j][k];
 			}
-			Iq_c[h0].first+=v0.real();
-			Iq_c[h0].second++;
+			Iq_c[h0]+=vt0.real();
 		}
+		Iq_c[h0]/=static_cast<double>(vIdx.size());
 	}
-	auto it_e=Iq_exp.begin();
-	auto it_c=Iq_c.begin();
+	static pickPar Once(Par,scalePlot,Iq_exp,Iq_c);
 
-
-	for(auto it=Iq_c.begin();it!=Iq_c.end();it++){
+	Grad=Complex{0,0};
+	energy=0;
+	for(auto it=mapIdx.begin();it != mapIdx.end();it++){
 		auto h0=it->first;
-		Iq_c[h0].first/=static_cast<double>(Iq_c[h0].second);
-	}
-	this->Scaling=it_e->second/it_c->second.first;
-	double Par2=sqrt(Par);
-	for(auto it=Iq_exp.begin();it!=Iq_exp.end();it++){
-		auto h0=it->first;
-		auto tmp=Par2*(Iq_exp[h0]-Iq_c[h0].first*Scaling);
-		energy+=tmp*tmp;
-		double grad=-4.0*tmp*Par*Scaling/static_cast<double>(Iq_c[h0].second);
-		Gscaling=-2.0*Par*tmp*Iq_c[h0].first;
+		auto tmp=(Iq_exp[h0]-Iq_c[h0]*scalePlot);
+		energy+=tmp*tmp*Par;
+		double grad=-2.0*Par*tmp*scalePlot/(double) mapIdx[h0].size();
+		Gscale+=-2.0*Par*tmp*Iq_c[h0];
 		for(size_t o{0}; o<mapIdx[h0].size();o++){
 			size_t i=mapIdx[h0][o][XX];
 			size_t j=mapIdx[h0][o][YY];
 			size_t k=mapIdx[h0][o][ZZ];
-			Grad[i][j][k]=grad*conj(F_k[i][j][k]);
+			size_t ib=i==0?0:nx-i;
+			size_t jb=j==0?0:ny-j;
+			if(k != 0 && k != nzp-1){
+				Grad[i][j][k]+=grad*F_k[i][j][k];
+				Grad[ib][jb][k]+=grad*F_k[ib][jb][k];
+			} else{
+				Grad[i][j][k]+=2.0*grad*F_k[i][j][k];
+			}
 		}
 	}
+
 	F_k=Grad;
+
+	return energy;
+}
+double Funktionell::Energy2(double & scalePlot,double & Gscale,array3<Complex> & F_k){
+	array3<Complex> Grad(nx,ny,nzp,sizeof(Complex));
+
+	double energy{0};
+	size_t nfx{(nx % 2 == 0)? nx/2: nx/2+1},nfy{(ny % 2 == 0)? ny/2: ny/2+1}
+	,nfz{(nz % 2 == 0)? nz/2: nz/2+1};
+	auto InC=Modulus(F_k);
+
+	energy=0.0;
+	Complex vt0,vt1;
+	Grad=Complex{0,0};
+	for(auto it=mapIdx.begin();it != mapIdx.end();it++){
+		const size_t h0=it->first;
+		vector<vector<int>> & vIdx=it->second;
+		for(size_t o{0};o<vIdx.size();o++){
+			int i=vIdx[o][XX];
+			int j=vIdx[o][YY];
+			int k=vIdx[o][ZZ];
+			size_t ib=i==0?0:nx-i;
+			size_t jb=j==0?0:ny-j;
+			if(k != 0 && k != nzp-1){
+				Grad[i][j][k]+=F_k[i][j][k];
+				Grad[ib][jb][k]+=F_k[ib][jb][k];
+				vt0=InC[i][j][k]+InC[ib][jb][k];
+			} else{
+				Grad[i][j][k]+=2.0*F_k[i][j][k];
+				vt0=InC[i][j][k];
+			}
+			energy+=vt0.real();
+		}
+	}
+//	double mw1,mw2,mw3,mw;
+//	for(auto i=0;i<nx;i++){
+//		int ia=(i<nfx)?i : i-nx;
+//		size_t ib=i==0?0:nx-i;
+//		for(auto j=0;j<ny;j++){
+//			int ja=(j<nfy)?j : j-ny;
+//			size_t jb=j==0?0:ny-j;
+//			for(auto k=0;k<nzp;k++){
+//				int ka=(k<nfz)?k : k-nz;
+//				mw1=OC[XX][XX]*ia+OC[XX][YY]*ja+OC[XX][ZZ]*ka;
+//				mw2=OC[YY][XX]*ia+OC[YY][YY]*ja+OC[YY][ZZ]*ka;
+//				mw3=OC[ZZ][XX]*ia+OC[ZZ][YY]*ja+OC[ZZ][ZZ]*ka;
+//				mw1=2.0*M_PI*mw1;
+//				mw2=2.0*M_PI*mw2;
+//				mw3=2.0*M_PI*mw3;
+//				mw=sqrt(mw1*mw1+mw2*mw2+mw3*mw3);
+//				int h0=static_cast<int>(mw/dq);
+//				if(mw<qcut){
+//					if(k != 0 && k != nzp-1){
+//						Grad[i][j][k]+=F_k[i][j][k];
+//						Grad[ib][jb][k]+=F_k[ib][jb][k];
+//						vt0=InC[i][j][k]+InC[ib][jb][k];
+//					} else{
+//						Grad[i][j][k]+=2.0*F_k[i][j][k];
+//						vt0=InC[i][j][k];
+//					}
+//					energy+=vt0.real();
+//				}
+//			}
+//		}
+//	}
+	F_k=Complex{0,0};
+	F_k=Grad;
+
 	return energy;
 }
 
@@ -161,7 +236,6 @@ double Funktionell::Deviate2(array3<Complex> & F_k){
 		}
 	}
 	return energy;
-
 }
 
 array3<Complex> Funktionell::Modulus(array3<Complex> & ro_k){

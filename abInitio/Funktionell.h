@@ -44,12 +44,14 @@ class Funktionell {
 	void setUpFirst(SaxsData *);
 	array3<Complex> Modulus(array3<Complex> &);
 	double Par{1.0e6};
+	double myScale{1};
 public:
 	Funktionell()=delete;
 	Funktionell(RhoSaxs *,RhoSaxs *,SaxsData *);
 	double Energy(double &,double &,array3<Complex> &);
 	double Energy2(double &,double &,array3<Complex> &);
 	double Deviate2(array3<Complex> &);
+	void Write();
 	virtual ~Funktionell();
 };
 

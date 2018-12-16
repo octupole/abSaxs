@@ -51,8 +51,11 @@ class ABSaxs {
 	std::function<void(double)> metric=[this](double R,double c=CellParam)
 			{co[XX][XX]=R*c;co[YY][YY]=R*c;co[ZZ][ZZ]=R*c;CO=SuperCell*co;};
 	RhoSaxs * Rho_in{nullptr}, * Rho_s{nullptr};
+	Pfftwpp::Prcfft3d * Forward3{nullptr};
+	Pfftwpp::Pcrfft3d * Backward3{nullptr};
 	array3<Complex> F_k;
 	array3<double> F_r;
+	array3<double> GradR;
 
 	array3<Complex> I_k;
 	array3<Complex> Modulus(array3<Complex> &);
@@ -67,6 +70,9 @@ public:
 	void setUp(SaxsData *);
 	void Run();
 	virtual void Minimize();
+	void testGradient();
+	void testMinim();
+	void minLBFGS(const real_1d_array &, double &, real_1d_array &, void *);
 	virtual ~ABSaxs();
 };
 }

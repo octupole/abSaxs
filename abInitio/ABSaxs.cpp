@@ -7,7 +7,16 @@
 
 #include "ABSaxs.h"
 namespace abinit{
+class LBFGSWrapper{
+	static ABSaxs * inst;
+public:
+	static void setInstance(ABSaxs * x){inst=x;}
+	static void myFunc(const real_1d_array &x, double &func, real_1d_array &grad, void *ptr){
+		return inst->minLBFGS(x,func,grad,ptr);
+	}
 
+};
+ABSaxs * LBFGSWrapper::inst=nullptr;
 ABSaxs::ABSaxs(uint nx, uint ny, uint nz, double SupCell): grid_b{nx,ny,nz},
 		nx{nx},ny{ny},nz{nz},nzp{nz/2+1},SuperCell{SupCell} {
 		}
@@ -51,6 +60,7 @@ void ABSaxs::setUp(SaxsData * exp){
 
  	F_k.Allocate(grid_b[XX],grid_b[YY],nzp,Calign);
 	F_r.Allocate(grid_b[XX],grid_b[YY],nzp*2,Ralign);
+	GradR.Allocate(grid_b[XX],grid_b[YY],nzp*2,Ralign);
 	I_k.Allocate(grid_b[XX],grid_b[YY],nzp,Calign);
 	cout << "Run with Rho_inner ="<< Nx<<" "<< Ny<<" "<< Nz<<" Resolution "<< co[XX][XX]/(float) Nx<<endl;
 	cout << co;
@@ -59,6 +69,7 @@ void ABSaxs::setUp(SaxsData * exp){
 }
 void ABSaxs::Run(){
 	Minimize();
+//	this->testGradient();
 }
 array3<Complex> ABSaxs::Modulus(array3<Complex> & ro_k){
 	array3<Complex> ro_k1(nx,ny,nzp);
@@ -72,8 +83,70 @@ array3<Complex> ABSaxs::Modulus(array3<Complex> & ro_k){
 	}
 	return ro_k1;
 }
-
+void ABSaxs::minLBFGS(const real_1d_array &x, double & energy, real_1d_array &grad, void *ptr){
+	size_t M{0};
+	static int NN=0;
+	F_r=0.0;
+	for(size_t o{0};o<Nx;o++)
+		for(size_t p{0};p<Ny;p++)
+			for(size_t q{0};q<Nz;q++){
+				F_r[o][p][q]=x[M++];
+			}
+	Forward3->fft(F_r,F_k);
+	energy=myFuncx->Energy(scalePlot,Gscale,F_k);
+	Backward3->fft(F_k,GradR);
+	M=0;
+	double msd{-2};
+	for(size_t o{0};o<Nx;o++)
+		for(size_t p{0};p<Ny;p++)
+			for(size_t q{0};q<Nz;q++){
+				grad[M++]=GradR[o][p][q];
+				if(msd < fabs(grad[M])) msd=fabs(grad[M]);
+			}
+	grad[0]=0.0;
+	cout << std::scientific;
+	cout << "Step "<< NN++<< " Energy = "<<energy << " Grad = " << fabs(msd)<<endl;
+}
 void ABSaxs::Minimize(){
+	/*
+	 * Arrays are destroyed while performing plan!!!
+	 */
+    double epsg = 0.0001;
+    double epsf = 0;
+    double epsx = 0;
+    ae_int_t maxits = 100;
+    minlbfgsstate state;
+    minlbfgsreport rep;
+	real_1d_array x0,grad;
+	x0.setlength(Nx*Ny*Nz);
+	grad.setlength(Nx*Ny*Nz);
+	Forward3 =new Pfftwpp::Prcfft3d(nx,ny,nz,F_r,F_k);
+	Backward3=new Pfftwpp::Pcrfft3d(nx,ny,nz,F_k,GradR);
+	Rho_s->copyOut(F_r);
+//	F_r=0.2;
+	F_r*=dvol;
+	size_t M{0};
+	for(size_t o{0};o<Nx;o++)
+		for(size_t p{0};p<Ny;p++)
+			for(size_t q{0};q<Nz;q++){
+				x0[M++]=F_r[o][p][q];
+			}
+	LBFGSWrapper::setInstance(this);
+
+    minlbfgscreate(3, x0, state);
+    minlbfgssetcond(state, epsg, epsf, epsx, maxits);
+    minlbfgssetxrep(state, true);
+
+    alglib::minlbfgsoptimize(state, &LBFGSWrapper::myFunc);
+    minlbfgsresults(state, x0, rep);
+    Rho_s->copyIn(F_r);
+    Rho_s->WriteIt();
+    myFuncx->Write();
+}
+void ABSaxs::testMinim(){
+
+}
+void ABSaxs::testGradient(){
 	/*
 	 * Arrays are destroyed while performing plan!!!
 	 */
@@ -108,12 +181,12 @@ void ABSaxs::Minimize(){
 	auto time2=MPI_Wtime();
 
 	cout << time2-time1<<endl;
-	for(size_t o{0};o<Nx;o++)
-		for(size_t p{0};p<Ny;p++)
-			for(size_t q{0};q<Nz;q++){
-				if(GradR[o][p][q] > 1.0e-2)
-					cout << o<< " " <<p<< " " <<q<< " " <<GradR[o][p][q]<<endl;
-			}
+//	for(size_t o{0};o<Nx;o++)
+//		for(size_t p{0};p<Ny;p++)
+//			for(size_t q{0};q<Nz;q++){
+//				if(GradR[o][p][q] > 1.0e-2)
+//					cout << o<< " " <<p<< " " <<q<< " " <<GradR[o][p][q]<<endl;
+//			}
 
 
 }

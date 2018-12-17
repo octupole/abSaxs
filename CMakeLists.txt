@@ -18,6 +18,7 @@ if (NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release")
 endif()
 
+include_directories("include")
 include(CheckCXXCompilerFlag)
 include(CheckIncludeFileCXX)
 include(CheckCXXSymbolExists)
@@ -131,18 +132,25 @@ endif()
 LONG_TODAY(BUILD_DATE)
 
 include_directories("${PROJECT_SOURCE_DIR}/alglib/include")
+include_directories("${PROJECT_SOURCE_DIR}/xdr/include")
   
 add_subdirectory(utils)
 add_subdirectory(alglib)
 add_subdirectory(Execute)
 add_subdirectory(abInitio)
 add_subdirectory(fftw3pp)
+add_subdirectory(Saxs)
+add_subdirectory(Properties)
+add_subdirectory(Molecules)
+add_subdirectory(libtraj)
+add_subdirectory(xdr)
+
 
 add_executable(abSaxs abSaxs.cpp)
 
 target_include_directories(abSaxs PUBLIC "${PROJECT_SOURCE_DIR}/Execute")
 
-target_link_libraries(abSaxs Execute absaxs fftw3pp utils alglib )
+target_link_libraries(abSaxs Execute saxs mols traj Properties absaxs fftw3pp utils alglib  xdrfile)
 
 if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     set (CMAKE_INSTALL_PREFIX "$ENV{HOME}" CACHE PATH "default install path" FORCE )

@@ -39,6 +39,37 @@ void RhoSaxs::initDensity(double Rd /* Radius of the sphere not Rg!*/){
 		}
 	}
 }
+void RhoSaxs::initBarrier( double Pot, double Rd,array3<double> & x){
+	try{
+		if(!__check()) throw string("\nCO matrix not initialized.\n");
+		if(this->Size() == 0) throw string("\n Electron density: array not allocated.\n");
+	}catch(const string & s){
+		cout << s <<endl;
+		exit(1);
+	}
+	Dvect P=CO*Dvect{0.5,0.5,0.5};
+	/* Assume Cell axis are orthogonal */
+	double dx=CO[XX][XX]/(double) this->getnnx();
+	double dy=CO[YY][YY]/(double) this->getnny();
+	double dz=CO[ZZ][ZZ]/(double) this->getnnz();
+	double dens{0.2},Rd2=Rd*Rd;
+	for(int o{0};o< this->getnnx();o++){
+		double xc=dx*(double)o;
+		for(int p{0};p<this->getnny();p++){
+			double yc=dy*(double)p;
+			for(int q{0};q< this->getnnz();q++){
+				double zc=dz*(double)q;
+				Dvect grid{xc,yc,zc};
+
+				if((grid-P).Norm2() <=Rd2)
+					x[o][p][q]=Pot;
+
+			}
+		}
+	}
+
+}
+
 void RhoSaxs::CopySmallerRho(RhoSaxs & rho0){
 	try{
 		if(this->Size()<rho0.Size()) throw string("\n Cannot copy a larger grid onto a smaller one.\n");

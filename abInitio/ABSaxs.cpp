@@ -93,38 +93,39 @@ void ABSaxs::minLBFGS(const real_1d_array &x, double & energy, real_1d_array &gr
 				F_r[o][p][q]=x[M++];
 			}
 	Forward3->fft(F_r,F_k);
-	energy=myFuncx->Energy(scalePlot,Gscale,F_k);
+	energy=myFuncx->EnergyQ(scalePlot,Gscale,F_k);
 	Backward3->fft(F_k,GradR);
+	energy+=myFuncx->EnergyR(F_r,GradR);
 	M=0;
 	double msd{-2};
 	for(size_t o{0};o<Nx;o++)
 		for(size_t p{0};p<Ny;p++)
 			for(size_t q{0};q<Nz;q++){
 				grad[M++]=GradR[o][p][q];
-				if(msd < fabs(grad[M])) msd=fabs(grad[M]);
+				if(msd < fabs(grad[M-1])) msd=fabs(grad[M-1]);
 			}
-	grad[0]=0.0;
 	cout << std::scientific;
 	cout << "Step "<< NN++<< " Energy = "<<energy << " Grad = " << fabs(msd)<<endl;
 }
 void ABSaxs::Minimize(){
-	/*
-	 * Arrays are destroyed while performing plan!!!
-	 */
     double epsg = 0.0001;
     double epsf = 0;
     double epsx = 0;
-    ae_int_t maxits = 100;
+    ae_int_t maxits = 40;
     minlbfgsstate state;
     minlbfgsreport rep;
 	real_1d_array x0,grad;
 	x0.setlength(Nx*Ny*Nz);
 	grad.setlength(Nx*Ny*Nz);
+	/*
+	 * Arrays are destroyed while performing plan!!!
+	 */
+
 	Forward3 =new Pfftwpp::Prcfft3d(nx,ny,nz,F_r,F_k);
 	Backward3=new Pfftwpp::Pcrfft3d(nx,ny,nz,F_k,GradR);
 	Rho_s->copyOut(F_r);
-//	F_r=0.2;
 	F_r*=dvol;
+	F_r=0.001;
 	size_t M{0};
 	for(size_t o{0};o<Nx;o++)
 		for(size_t p{0};p<Ny;p++)
@@ -147,35 +148,42 @@ void ABSaxs::testMinim(){
 
 }
 void ABSaxs::testGradient(){
+	real_1d_array x0,grad;
+	x0.setlength(Nx*Ny*Nz);
+	grad.setlength(Nx*Ny*Nz);
 	/*
 	 * Arrays are destroyed while performing plan!!!
 	 */
-	array3<double> GradR(nx,ny,nzp*2,sizeof(double));
 
-	Pfftwpp::Prcfft3d  Forward3(nx,ny,nz,F_r,F_k);
-	Pfftwpp::Pcrfft3d Backward3(nx,ny,nz,F_k,GradR);
-	Funkll::Funktionell & myFunc=*myFuncx;
-	cout << std::scientific <<endl;
-
+	Forward3 =new Pfftwpp::Prcfft3d(nx,ny,nz,F_r,F_k);
+	Backward3=new Pfftwpp::Pcrfft3d(nx,ny,nz,F_k,GradR);
 	Rho_s->copyOut(F_r);
+	F_r[2][2][3]=0.2;
 	F_r*=dvol;
-	auto time1=MPI_Wtime();
-
-	double c=F_r[2][32][30];
+	size_t M{0};
+	for(size_t o{0};o<Nx;o++)
+		for(size_t p{0};p<Ny;p++)
+			for(size_t q{0};q<Nz;q++){
+				x0[M++]=F_r[o][p][q];
+			}
+	cout << F_r[2][2][3] <<endl;
+	double c=F_r[2][2][3];
 	double delta=0.2,eps=0.002;
 	double Beg{-delta*0.5};
 	double End{delta*0.5};
 	vector<double> ee{0,0,0};
-	int M{0};
+	M=0;
+	void * myptr{nullptr};
+	auto time1=MPI_Wtime();
 	for(auto o{Beg};o<=End;o+=delta*0.5){
-		F_r[2][32][30]=c+o;
-		cout<< "o = " << o <<endl;
-		Forward3.fft(F_r,F_k);
-		double E=myFuncx->Energy(scalePlot,Gscale,F_k);
+		F_r[2][2][3]=c+o;
+		x0[2*Nz*Ny+3*Nz+3]=c+o;
+		cout<< "o = " << o ;
+		double E;
+		this->minLBFGS(x0, E,grad, myptr);
 		ee[M++]=E;
-		Backward3.fft(F_k,GradR);
-		cout << "E =" << E<<endl;
-		cout <<"Grad " << GradR[2][32][30]<<endl;
+		cout << " E =" << E;
+		cout <<" Grad " << GradR[2][2][3]<<endl;
 	}
 	cout << (ee[2]-ee[0])/delta<< endl;
 	auto time2=MPI_Wtime();

@@ -15,6 +15,7 @@ ExecabSaxs::ExecabSaxs(trj::TrjRead & MyIn) {
 void ExecabSaxs::Run_abSaxs(){
 	this->expSaxs();
 	myABSaxs->setUp(Exp);
+	//myABSaxs->testGradient();
 	myABSaxs->Run();
 }
 void ExecabSaxs::expSaxs(){

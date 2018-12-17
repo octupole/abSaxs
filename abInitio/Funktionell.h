@@ -36,6 +36,7 @@ class Funktionell {
 	Matrix CO,OC,co,oc;
 	double dq{0.002};
 	double qcut{1.0};
+	double Rd{0},Pot{1.0e6};
 	map<size_t,double> Iq_c;
 	map<size_t,double> Iq_exp;
 	map<size_t,vector<vector<int>>> mapIdx;
@@ -48,7 +49,9 @@ class Funktionell {
 public:
 	Funktionell()=delete;
 	Funktionell(RhoSaxs *,RhoSaxs *,SaxsData *);
-	double Energy(double &,double &,array3<Complex> &);
+	double EnergyQ(double &,double &,array3<Complex> &);
+	double EnergyQQ(double &,double &,array3<Complex> &);
+	double EnergyR(array3<double> &, array3<double> &);
 	double Energy2(double &,double &,array3<Complex> &);
 	double Deviate2(array3<Complex> &);
 	void Write();

@@ -12,13 +12,16 @@ struct pickPar{
 	pickPar(double &Par, double & scl,map<size_t,double> & Ie,map<size_t,double> & Ic){
 		double energy{0};
 		auto i0=Ie.begin();
-		scl=Ie[i0->first]/Ic[i0->first];
+		scl=Ic[i0->first]/Ie[i0->first];
 		for(auto it{Ie.begin()};it!=Ie.end();it++){
 			auto h0=it->first;
-			double tmp=Ie[h0]-Ic[h0]*scl;
-			double wei=1.0/Ie[h0];
+			Ie[h0]*=scl;
+			double tmp=Ie[h0]-Ic[h0];
+//			double wei=1.0/Ie[h0];
+			double wei=1.0;
 			energy+=tmp*tmp;
 		}
+		scl=1.0;
 		Par=INEN/energy;
 	}
 };
@@ -36,6 +39,7 @@ Funktionell::Funktionell(RhoSaxs * ro_out, RhoSaxs * ro_in,SaxsData * exp){
 	Nx=ro_in->getnnx();
 	Ny=ro_in->getnny();
 	Nz=ro_in->getnnz();
+	Rd=co[XX][XX]*2.0/3.5;
 	this->setUpFirst(exp);
 }
 void Funktionell::setUpFirst(SaxsData * exp){
@@ -85,7 +89,33 @@ void Funktionell::setUpFirst(SaxsData * exp){
 		}
 	}
 }
-double Funktionell::Energy(double & scalePlot,double & Gscale,array3<Complex> & F_k){
+double Funktionell::EnergyR(array3<double> & F_r,array3<double> & grad){
+	double energy{0};
+	Dvect P=co*Dvect{0.5,0.5,0.5};
+	/* Assume Cell axis are orthogonal */
+	double dx=co[XX][XX]/(double) Nx;
+	double dy=co[YY][YY]/(double) Ny;
+	double dz=co[ZZ][ZZ]/(double) Nz;
+	double R2=Rd*Rd;
+	for(int o{0};o< Nx;o++){
+		double xc=dx*(double)o;
+		for(int p{0};p<Ny;p++){
+			double yc=dy*(double)p;
+			for(int q{0};q<Nz;q++){
+				double zc=dz*(double)q;
+				Dvect grid{xc,yc,zc};
+				if((grid-P).Norm2()>R2){
+					double tmp{F_r[o][p][q]};
+					energy+=Pot*tmp*tmp;
+					grad[o][p][q]+=2.0*Pot*tmp;
+				}
+			}
+		}
+	}
+
+	return energy;
+}
+double Funktionell::EnergyQ(double & scalePlot,double & Gscale,array3<Complex> & F_k){
 	array3<Complex> Grad(nx,ny,nzp,sizeof(Complex));
 	Iq_c.clear();
 	auto InC=Modulus(F_k);
@@ -130,6 +160,67 @@ double Funktionell::Energy(double & scalePlot,double & Gscale,array3<Complex> & 
 				Grad[i][j][k]+=grad*F_k[i][j][k];
 				Grad[ib][jb][k]+=grad*F_k[ib][jb][k];
 			} else{
+				Grad[i][j][k]+=2.0*grad*F_k[i][j][k];
+			}
+		}
+	}
+
+	F_k=Grad;
+
+	return energy;
+}
+double Funktionell::EnergyQQ(double & scalePlot,double & Gscale,array3<Complex> & F_k){
+	array3<Complex> Grad(nx,ny,nzp,sizeof(Complex));
+	Iq_c.clear();
+	auto InC=Modulus(F_k);
+	Complex vt0{0,0};
+	double energy{0};
+	for(auto it=mapIdx.begin();it != mapIdx.end();it++){
+		const size_t h0=it->first;
+		vector<vector<int>> & vIdx=it->second;
+		for(size_t o{0};o<vIdx.size();o++){
+			int i=vIdx[o][XX];
+			int j=vIdx[o][YY];
+			int k=vIdx[o][ZZ];
+			size_t ib=i==0?0:nx-i;
+			size_t jb=j==0?0:ny-j;
+			if(k != 0 && k != nzp-1){
+				vt0=InC[i][j][k]+InC[ib][jb][k];
+			} else{
+				vt0=InC[i][j][k];
+			}
+			Iq_c[h0]+=vt0.real();
+		}
+		Iq_c[h0]/=static_cast<double>(vIdx.size());
+	}
+	static pickPar Once(Par,scalePlot,Iq_exp,Iq_c);
+	myScale=scalePlot;
+	Grad=Complex{0,0};
+	energy=0;
+	double tmp,grad;
+	for(auto it=mapIdx.begin();it != mapIdx.end();it++){
+		auto h0=it->first;
+		double wei=1.0/Iq_exp[h0];
+		for(size_t o{0}; o<mapIdx[h0].size();o++){
+			size_t i=mapIdx[h0][o][XX];
+			size_t j=mapIdx[h0][o][YY];
+			size_t k=mapIdx[h0][o][ZZ];
+			size_t ib=i==0?0:nx-i;
+			size_t jb=j==0?0:ny-j;
+			if(k != 0 && k != nzp-1){
+				tmp=Iq_exp[h0]-InC[i][j][k].real()*scalePlot;
+				energy+=tmp*tmp*Par*wei;
+				grad=-2.0*Par*wei*tmp*scalePlot;
+				Grad[i][j][k]+=grad*F_k[i][j][k];
+
+				tmp=Iq_exp[h0]-InC[ib][jb][k].real()*scalePlot;
+				energy+=tmp*tmp*Par*wei;
+				grad=-2.0*Par*wei*tmp*scalePlot;
+				Grad[ib][jb][k]+=grad*F_k[ib][jb][k];
+			} else{
+				tmp=Iq_exp[h0]-InC[i][j][k].real()*scalePlot;
+				energy+=tmp*tmp*Par*wei;
+				grad=-2.0*Par*wei*tmp*scalePlot;
 				Grad[i][j][k]+=2.0*grad*F_k[i][j][k];
 			}
 		}

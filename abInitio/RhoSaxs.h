@@ -84,6 +84,7 @@ public:
 		return *this;
 	};
 	void initDensity(double);
+	void initBarrier(double,double,array3<double> &);
 	void Density();
 	void WriteIt();
 	void copyIn(array3<double> &);

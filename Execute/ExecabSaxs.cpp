@@ -41,21 +41,29 @@ void ExecabSaxs::__SuperCell(){
 	Nz=nz;
 }
 
-void ExecabSaxs::__Saxs(MAtoms * atm){
+array3<double> & ExecabSaxs::__Saxs(MAtoms * atm){
 	__SuperCell();
 	MySaxs->Setup(atm->getIndx(),Top->get_atSFactor(),false,true);
 
 	Rho_ex->Allocate(nx,ny,nz);
 	MySaxs->ComputeDENS(Rho_ex,atm);
+	return MySaxs->getI_r();
 }
 void ExecabSaxs::Run_abSaxs(MAtoms * atm){
 	this->expSaxs();
-	myABSaxs->setUp(Exp);
-	myABSaxs->getMetrics(CO,co);
 	if(atm){
+		myABSaxs->setUpCell(Exp);
+		myABSaxs->getMetrics(CO,co);
+
 		Metric<double> Mt(CO);
 		atm->setMT(Mt);
-		__Saxs(atm);
+		array3<double> F=__Saxs(atm);
+
+		myABSaxs->setUpRho(Exp,F);
+	} else{
+		myABSaxs->setUpCell(Exp);
+		myABSaxs->getMetrics(CO,co);
+		myABSaxs->setUpRho(Exp);
 	}
 	//myABSaxs->testGradient();
 	myABSaxs->Run();

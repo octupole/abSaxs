@@ -20,8 +20,23 @@ ABSaxs * LBFGSWrapper::inst=nullptr;
 ABSaxs::ABSaxs(uint nx, uint ny, uint nz, double SupCell): grid_b{nx,ny,nz},
 		nx{nx},ny{ny},nz{nz},nzp{nz/2+1},SuperCell{SupCell} {
 		}
+void ABSaxs::setUpRho(SaxsData * exp){
+	double Rd=exp->Rd();
+	Rho_in->initDensity(Rd);
+	Rho_s->PartialCopy(*Rho_in);
+	myFuncx=new Funkll::Funktionell(Rho_s,Rho_in,exp);
 
-void ABSaxs::setUp(SaxsData * exp){
+}
+void ABSaxs::setUpRho(SaxsData * exp,array3<double> & F_r){
+	for(size_t o{0};o<F_r.Nx();o++)
+		for(size_t p{0};p<F_r.Ny();p++)
+			for(size_t q{0};q<F_r.Nz();q++)
+				(*Rho_s)[0][o][p][q]=F_r[o][p][q];
+	Rho_in->PartialCopy(*Rho_s);
+	myFuncx=new Funkll::Funktionell(Rho_s,Rho_in,exp);
+}
+
+void ABSaxs::setUpCell(SaxsData * exp){
 	double Rg=exp->getRg();
 	double Rd=exp->Rd();
 	metric(Rd);
@@ -48,10 +63,6 @@ void ABSaxs::setUp(SaxsData * exp){
 
 	Rho_in=new abInitioRho::RhoSaxs(grid_a[XX],grid_a[YY],grid_a[ZZ],co);
 	Rho_s=new abInitioRho::RhoSaxs(grid_b[XX],grid_b[YY],grid_b[ZZ],CO);
-
-	Rho_in->initDensity(Rd);
-	Rho_s->CopySmallerRho(*Rho_in);
-	myFuncx=new Funkll::Funktionell(Rho_s,Rho_in,exp);
 
 	ptrdiff_t alloc_local, local_n0, local_0_start;
 

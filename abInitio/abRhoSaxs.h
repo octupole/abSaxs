@@ -71,7 +71,7 @@ public:
 	RhoSaxs(size_t nx,size_t ny,size_t nz,Matrix & co):CO{co},Grid<1>::Grid<1>(nx,ny,nz)
 			{OC=CO.Inversion();__setDx();};
 	void setCO(Matrix CO){this->CO=CO;this->OC=this->CO.Inversion();__setDx();}
-	void CopySmallerRho(RhoSaxs &);
+	void PartialCopy(RhoSaxs &);
 	void MakeAvg();
 	Matrix & getCO(){return CO;}
 	Matrix & getOC(){return OC;}

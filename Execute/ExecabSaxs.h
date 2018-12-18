@@ -42,7 +42,7 @@ class ExecabSaxs {
 	Saxs * MySaxs{nullptr}; ///< Pointer to the Saxs class to be instantiated
 	RhoSaxs * Rho_ex{nullptr};
 	Topol_NS::Topol * Top{nullptr};
-	void __Saxs(MAtoms *);
+	array3<double> & __Saxs(MAtoms *);
 	void __SuperCell();
 public:
 	ExecabSaxs(trj::TrjRead &,Topol_NS::Topol & );

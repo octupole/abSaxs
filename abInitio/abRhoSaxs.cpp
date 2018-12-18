@@ -70,17 +70,21 @@ void RhoSaxs::initBarrier( double Pot, double Rd,array3<double> & x){
 
 }
 
-void RhoSaxs::CopySmallerRho(RhoSaxs & rho0){
-	try{
-		if(this->Size()<rho0.Size()) throw string("\n Cannot copy a larger grid onto a smaller one.\n");
-	}catch(const string & s){
-		cout << s <<endl;
-		exit(1);
-	}
-	for(int o{0};o<rho0.getnnx();o++){
-		for(int p{0};p<rho0.getnny();p++){
-			for(int q{0};q< rho0.getnnz();q++){
-				(*this)[0][o][p][q]=rho0[0][o][p][q];
+void RhoSaxs::PartialCopy(RhoSaxs & rho0){
+	if(this->Size()>rho0.Size()){
+		for(int o{0};o<rho0.getnnx();o++){
+			for(int p{0};p<rho0.getnny();p++){
+				for(int q{0};q< rho0.getnnz();q++){
+					(*this)[0][o][p][q]=rho0[0][o][p][q];
+				}
+			}
+		}
+	} else{
+		for(int o{0};o<this->getnnx();o++){
+			for(int p{0};p<this->getnny();p++){
+				for(int q{0};q< this->getnnz();q++){
+					(*this)[0][o][p][q]=rho0[0][o][p][q];
+				}
 			}
 		}
 	}

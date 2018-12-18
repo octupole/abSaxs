@@ -69,8 +69,10 @@ public:
 	ABSaxs()=delete;
 	ABSaxs(uint, uint, uint, double=1.0);
 	void getMetrics(Matrix & bCO,Matrix & bco){bCO=CO;bco=co;}
+	void setUpCell(SaxsData *);
+	void setUpRho(SaxsData *);
+	void setUpRho(SaxsData *,array3<double> &);
 
-	void setUp(SaxsData *);
 	void Run();
 	virtual void Minimize();
 	void testGradient();

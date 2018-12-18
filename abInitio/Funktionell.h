@@ -11,9 +11,10 @@
 #include <functional>
 #include <utility>
 #include <complex>
+
+#include "abRhoSaxs.h"
 #include "MyUtilClass.h"
 #include "Ftypedefs.h"
-#include "RhoSaxs.h"
 #include "SaxsData.h"
 using namespace MATRIX;
 using namespace DVECT;
@@ -26,7 +27,7 @@ using std::stringstream;
 using std::map;
 using std::tuple;
 using namespace Array;
-using namespace abinit;
+
 namespace Funkll {
 class Funktionell {
 	using Matrix=MMatrix<double>;
@@ -44,11 +45,11 @@ class Funktionell {
 
 	void setUpFirst(SaxsData *);
 	array3<Complex> Modulus(array3<Complex> &);
-	double Par{1.0e6};
+	double Par{1.0};
 	double myScale{1};
 public:
 	Funktionell()=delete;
-	Funktionell(RhoSaxs *,RhoSaxs *,SaxsData *);
+	Funktionell(abInitioRho::RhoSaxs *,abInitioRho::RhoSaxs *,SaxsData *);
 	double EnergyQ(double &,double &,array3<Complex> &);
 	double EnergyQQ(double &,double &,array3<Complex> &);
 	double EnergyR(array3<double> &, array3<double> &);

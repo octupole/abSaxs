@@ -18,6 +18,7 @@
 #include <iomanip>
 #include <cmath>
 #include "Timer.h"
+#include <complex>
 using vvector_q=vector<vector<Quaternion> >;
 
 struct mysort{
@@ -36,6 +37,7 @@ template <typename T>
 struct dual_d{
 	T x,y;
 };
+
 template <typename T>
 class CenterMassBW3: public CenterMass<T>{
 	using Dvect=DDvect<T>;
@@ -62,7 +64,7 @@ protected:
 	  map<string,long int, mysort> nDiffs;
 	  static bool BeenThere;
 	  alglib::real_1d_array Diff1D(vector<Dvect> & , size_t );
-	  virtual vector<complex<T>> DiffQQ(vvector_q &,const int , const int , const int);
+	  vector<std::complex<T> > DiffQQ(vvector_q &,const int , const int , const int);
 	  const T R00=1.3;
 	  bool AlreadySkipped=false;
 	  streampos SkipPos=0;

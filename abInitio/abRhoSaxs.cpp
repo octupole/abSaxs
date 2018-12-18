@@ -5,8 +5,8 @@
  *      Author: marchi
  */
 
-#include "RhoSaxs.h"
-namespace abinit{
+#include "abRhoSaxs.h"
+namespace abInitioRho{
 bool RhoSaxs::firstTime=true;
 void RhoSaxs::Density(){
 }

@@ -20,6 +20,8 @@
 #include "trjInput.h"
 #include "myEnums.hpp"
 #include "MyUtilClass.h"
+#include "DensMode.h"
+#include "CenterMass.h"
 
 
 
@@ -56,22 +58,39 @@ public:
  */
 using Dvect=DVECT::DDvect<double>;
 class TrjRead: public trjInput {
-	string filein,fileout{"abSaxs.out"};
+	int MyOrder{1};
+	int MyDensAvg{4};
+	size_t BoxMultiply{1};
+	double Mycut{4.0};
+	double Myd{0.05};
+	string filein,fileout{"abSaxs.out"},filepdb,filedens{"abSaxs.vts"};
 	double SuperCellSide{1.0};
 	unsigned int nnx{128},nny{128},nnz{128};
 	ifstream * finx{nullptr};
+	ifstream * fpdb{nullptr};
 	ofstream * foutx{nullptr};
+	DensMode ModeCompute;
+
 public:
+	Enums::Compute WhatToDo{Enums::SAXS};
+
 	Values<string> gfilein{filein};
 	Values<string> gfileout{fileout};
+	Values<string> gfiledens{filedens};
 	Values<double> gSupCell{SuperCellSide};
 	Streams<ifstream> gFin;
 	Streams<ofstream> gFout;
+	Streams<ifstream> gFpdb;
+	Values<double> gMyCut{Mycut};
+	Values<double> gMyd{Myd};
+	CenterMass_t WhichDiffusion{diffk};
+
 	Values<unsigned int> gnnx{nnx};
 	Values<unsigned int> gnny{nny};
 	Values<unsigned int> gnnz{nny};
-
-
+	Values<int> gMyOrder{MyOrder};
+	Values<int> gMyDensAvg{MyDensAvg};
+	Values<DensMode> gModeCompute{ModeCompute};
 
 	TrjRead(int nv,char ** v);
 	void Input();

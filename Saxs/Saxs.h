@@ -133,6 +133,7 @@ public:
 	Saxs & operator-=(Saxs &);
 	Saxs & operator=(const Saxs &);
 	array3<Complex> getI_k(){return I_k;};
+	array3<double> getI_r(){return I_r;};
 	void Clear();
 	void SetupQdf();
 	void SetMass(double a){MassSolute=a;};

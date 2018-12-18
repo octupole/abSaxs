@@ -13,9 +13,11 @@ SaxsData::SaxsData(vector<double> & x,vector<double> & y) {
 }
 
 void SaxsData::Generate(vector<double> & x,vector<double> & y){
-	const int W{100},DEG{6};
+	const int DEG{6};
+	int W{1};
 	const int SEGM{10},SKIP{5};
 	double qcut{0.07};
+	W=(double) x.size()/8.0;
 	ae_int_t basisFuncs{2};
 	ae_int_t info;
 	barycentricinterpolant p;

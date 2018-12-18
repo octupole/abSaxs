@@ -7,14 +7,56 @@
 
 #include "ExecabSaxs.h"
 
-ExecabSaxs::ExecabSaxs(trj::TrjRead & MyIn) {
+ExecabSaxs::ExecabSaxs(trj::TrjRead & MyIn, Topol_NS::Topol & Top0): Top{&Top0} {
 	ExIn=MyIn.gFin();
 	ExOut=MyIn.gFout();
 	myABSaxs=new abinit::ABSaxs(MyIn.gnnx(),MyIn.gnny(),MyIn.gnnz(),MyIn.gSupCell());
+	int MyOrder=MyIn.gMyOrder();
+	double Myd=MyIn.gMyd();
+	double Mycut=MyIn.gMyCut();
+	if(MyOrder>1) Rho_ex=new RhoSaxsLI;
+	else Rho_ex=new RhoSaxs;
+	MySaxs=new Saxs(MyOrder,Myd,Mycut);
+	nx=MyIn.gnnx();
+	ny=MyIn.gnny();
+	nz=MyIn.gnnz();
+	MySaxs->Allocate(nx,ny,nz);
+	auto fileDens=MyIn.gfiledens();
+	myDens=MyIn.gModeCompute();
+	myDensAvg=MyIn.gMyDensAvg();
+	MySaxs->setDens(myDensAvg,fileDens,myDens);
+	cout << "There 4"<<endl;
+
+
 }
-void ExecabSaxs::Run_abSaxs(){
+void ExecabSaxs::__SuperCell(){
+	MySaxs->setSuperCell0(1.0);
+	double SuperCell=CO[XX][XX];
+	try{
+		if(SuperCell < 0) throw string("pdb box does not have CRYST1 keyword set, cannot compute.");
+	}catch(const string & s){cout << s <<endl;Finale::Finalize::Final();}
+	MySaxs->setSuperCell(SuperCell);
+	Nx=nx;
+	Ny=ny;
+	Nz=nz;
+}
+
+void ExecabSaxs::__Saxs(MAtoms * atm){
+	__SuperCell();
+	MySaxs->Setup(atm->getIndx(),Top->get_atSFactor(),false,true);
+
+	Rho_ex->Allocate(nx,ny,nz);
+	MySaxs->ComputeDENS(Rho_ex,atm);
+}
+void ExecabSaxs::Run_abSaxs(MAtoms * atm){
 	this->expSaxs();
 	myABSaxs->setUp(Exp);
+	myABSaxs->getMetrics(CO,co);
+	if(atm){
+		Metric<double> Mt(CO);
+		atm->setMT(Mt);
+		__Saxs(atm);
+	}
 	//myABSaxs->testGradient();
 	myABSaxs->Run();
 }

@@ -214,7 +214,7 @@ void Atoms<T>::initLists(Topol_NS::TopolPDB & y,vector<string> & L){
 	PDBs=vector<Topol_NS::PDBdata>(y.Size());
 
 	for(size_t o=0;o<PDBs.size();o++) PDBs[o]=y[o];
-	ResList0=new vector<string>(L);
+	if(L.size()) ResList0=new vector<string>(L);
 	ResIndx0=new vector<int>;
 	int ia=0;
 	for(size_t o=0;o<PDBs.size();o++){

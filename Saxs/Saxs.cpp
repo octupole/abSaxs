@@ -886,6 +886,7 @@ void Saxs::ComputeDENS(RhoSaxs * Rho_ex,MAtoms * y){
 	for(auto op: g)for(auto oq:op)tot++;
 	Nsolute=tot;
 	RhoSaxs & Rho_e=*Rho_ex;
+
 	array3<Complex> ro_k(nx,ny,nzp,align);
 	array3<Complex> ro_ktot(nx,ny,nzp,align);
 	array4<double> & ro_r=Rho_e;
@@ -898,6 +899,7 @@ void Saxs::ComputeDENS(RhoSaxs * Rho_ex,MAtoms * y){
 	MCO+=co;
 	MOC+=oc;
 	Vol+=Mt.getVol();
+
 	size_t nfx,nfy,nfz;
 	nfx=(nx % 2 == 0)? nx/2: nx/2+1;
 	nfy=(ny % 2 == 0)? ny/2: ny/2+1;

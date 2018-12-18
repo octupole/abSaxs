@@ -11,4 +11,5 @@ set(SOURCE SaxsPadding.cpp BackupFile.cpp LagrangeInterpolation.cpp
 	ScatteringFactorsN.cpp SaxsDebye.cpp SaxsDir.cpp Spline1DInterpolant.cpp
 	SaxsBSPStatic.cpp SaxsBSPfixed.cpp SaxsFilter.cpp fftw++.cpp)
 add_library(saxs STATIC ${SOURCE})
-target_include_directories(saxs PUBLIC "${PROJECT_SOURCE_DIR}/Properties" "${PROJECT_SOURCE_DIR}/Molecules" "${PROJECT_SOURCE_DIR}/libtraj")
+target_include_directories(saxs PUBLIC "${PROJECT_SOURCE_DIR}/Properties" "${PROJECT_SOURCE_DIR}/Molecules" 
+	"${PROJECT_SOURCE_DIR}/libtraj")

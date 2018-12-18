@@ -10,7 +10,6 @@
 #include "SaxsData.h"
 #include "MyUtilClass.h"
 #include "Ftypedefs.h"
-#include "RhoSaxs.h"
 #include "Prcfft3d.h"
 #include "Pcrfft3d.h"
 #include "Funktionell.h"
@@ -20,6 +19,8 @@
 #include <map>
 #include <functional>
 #include <tuple>
+
+#include "abRhoSaxs.h"
 using namespace MATRIX;
 using namespace DVECT;
 using uint=unsigned int;
@@ -50,7 +51,7 @@ class ABSaxs {
 	double SuperCell{1.0};
 	std::function<void(double)> metric=[this](double R,double c=CellParam)
 			{co[XX][XX]=R*c;co[YY][YY]=R*c;co[ZZ][ZZ]=R*c;CO=SuperCell*co;};
-	RhoSaxs * Rho_in{nullptr}, * Rho_s{nullptr};
+	abInitioRho::RhoSaxs * Rho_in{nullptr}, * Rho_s{nullptr};
 	Pfftwpp::Prcfft3d * Forward3{nullptr};
 	Pfftwpp::Pcrfft3d * Backward3{nullptr};
 	array3<Complex> F_k;
@@ -67,6 +68,8 @@ class ABSaxs {
 public:
 	ABSaxs()=delete;
 	ABSaxs(uint, uint, uint, double=1.0);
+	void getMetrics(Matrix & bCO,Matrix & bco){bCO=CO;bco=co;}
+
 	void setUp(SaxsData *);
 	void Run();
 	virtual void Minimize();

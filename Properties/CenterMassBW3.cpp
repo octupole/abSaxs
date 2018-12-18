@@ -162,7 +162,7 @@ void CenterMassBW3<T>::ReadIt(ifstream & fin){
 	BeenThere=true;
 }
 template <typename T>
-vector<complex<T>> CenterMassBW3<T>::DiffQQ(vvector_q & Q,const int ell, const int mp, const int mm){
+vector<std::complex<T>> CenterMassBW3<T>::DiffQQ(vvector_q & Q,const int ell, const int mp, const int mm){
 	size_t Ndim=Q[0].size();
 	vector<complex<T> > Ctot(Ndim,{0.0,0.0});
 	for(auto pv: Q){
@@ -187,7 +187,7 @@ vector<complex<T>> CenterMassBW3<T>::DiffQQ(vvector_q & Q,const int ell, const i
 		for(auto o=0;o<Ndim;o++){
 			T x=static_cast<T>(C[o].x);
 			T y=static_cast<T>(C[o].y);
-			Ctot[o]+=complex<T>{x,y};
+			Ctot[o]+=std::complex<T>{x,y};
 		}
 	}
 
@@ -468,7 +468,6 @@ void CenterMassBW3<T>::RefCoord(rvec * xa, vector<string> & atn, vvector_i & ind
 	xc=t;
 
 }
-
 template <typename T>
 void CenterMassBW3<T>::operator ()(vector<Dvect> & v,  vector<vector<Dvect> > & vm, vector<Quaternion> & Q, vector<Quaternion> & Q_m) {
 	CenterMass<T>::operator()(v,Q);

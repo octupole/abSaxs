@@ -65,6 +65,39 @@ void TrjRead::Input(){
 			}
 			else throw string(" One parameters is needed for  " + inmap["-supcell"][0] + " option ");
 		}
+		if(!inmap["-pdb"].empty()) {
+			if(inmap["-pdb"].size() < 2) throw string("\n filename expected for " + inmap["-pdb"][0] + " option \n");
+			if(inmap["-pdb"].size() > 2) throw string("\n More than one entry for " + inmap["-pdb"][0] + " option \n");
+			filepdb=inmap["-pdb"][1];
+			fpdb=new ifstream(filepdb.c_str(),ios::in);
+			if(!fpdb) throw string("\n Cannot open " + filepdb + "!!\n");
+		}
+		if(!inmap["-dens"].empty()) {
+			WhatToDo=Enums::ELDENS;
+			int Nm=inmap["-dens"].size();
+			std::stringstream ss;
+			ss << Nm;
+			ModeCompute(inmap["-dens"][1]);
+			try{
+				if(Nm == 3){
+					stringstream(inmap["-dens"][2])>> MyOrder;
+				} else if(Nm == 4){
+					stringstream(inmap["-dens"][2])>> MyOrder;
+					stringstream(inmap["-dens"][3])>> MyDensAvg;
+				} else if(Nm > 4) throw string("\n Error: No. of parameters for "
+						+ inmap["-grid"][0] + " exceeds three. It was "
+						+ ss.str()+ " Abort!\n");
+			}catch(const string & s){
+				cout << s <<endl;
+				exit(1);
+			}
+		}
+		if(!inmap["-qhist"].empty()) {
+			if(inmap["-qhist"].size() != 3) throw string(" Bin size and cutoff in q-space needed for  " + inmap["-qhist"][0] + " option ");
+			stringstream(inmap["-qhist"][1])>> Myd;
+			stringstream(inmap["-qhist"][2])>> Mycut;
+		}
+
 		if(!inmap["-grid"].empty()) {
 			int Nm=inmap["-grid"].size();
 			try{
@@ -89,9 +122,26 @@ void TrjRead::Input(){
 
 	gFin=finx;
 	gFout=foutx;
+	gFpdb=fpdb;
+	if(WhatToDo==Enums::ELDENS){
+#ifdef HAVE_VTK
+		if(fileout.find_first_of(".") != std::string::npos){
+			fileout=fileout.substr(0,fileout.find_first_of(".")+1)+"vts";
+		} else{
+			fileout=fileout+".vts";
+		}
+#else
+		if(fileout.find_first_of(".") != std::string::npos){
+			fileout=fileout.substr(0,fileout.find_first_of(".")+1)+"cvs";
+		} else{
+			fileout=fileout+".cvs";
+		}
+#endif
+
+	}
 }
 TrjRead::~TrjRead() {
-	// TODO Auto-generated destructor stub
+
 }
 
 } /* namespace trj */

@@ -12,22 +12,20 @@ struct pickPar{
 	pickPar(double &Par, double & scl,map<size_t,double> & Ie,map<size_t,double> & Ic){
 		double energy{0};
 		auto i0=Ie.begin();
-		scl=Ic[i0->first]/Ie[i0->first];
 		for(auto it{Ie.begin()};it!=Ie.end();it++){
 			auto h0=it->first;
-			Ie[h0]*=scl;
 			double tmp=Ie[h0]-Ic[h0];
-//			double wei=1.0/Ie[h0];
 			double wei=1.0;
 			energy+=tmp*tmp;
 		}
 		scl=1.0;
 		Par=INEN/energy;
 	}
+
 };
 
 
-Funktionell::Funktionell(RhoSaxs * ro_out, RhoSaxs * ro_in,SaxsData * exp){
+Funktionell::Funktionell(abInitioRho::RhoSaxs * ro_out, abInitioRho::RhoSaxs * ro_in,SaxsData * exp){
 	CO=ro_out->getCO();
 	OC=ro_out->getOC();
 	co=ro_in->getCO();
@@ -146,7 +144,7 @@ double Funktionell::EnergyQ(double & scalePlot,double & Gscale,array3<Complex> &
 	for(auto it=mapIdx.begin();it != mapIdx.end();it++){
 		auto h0=it->first;
 		auto tmp=(Iq_exp[h0]-Iq_c[h0]*scalePlot);
-		double wei=1.0/Iq_exp[h0];
+		double wei=1.0;
 		energy+=tmp*tmp*Par*wei;
 		double grad=-2.0*Par*wei*tmp*scalePlot/(double) mapIdx[h0].size();
 		Gscale+=-2.0*Par*wei*tmp*Iq_c[h0];
@@ -164,9 +162,7 @@ double Funktionell::EnergyQ(double & scalePlot,double & Gscale,array3<Complex> &
 			}
 		}
 	}
-
 	F_k=Grad;
-
 	return energy;
 }
 double Funktionell::EnergyQQ(double & scalePlot,double & Gscale,array3<Complex> & F_k){
@@ -236,7 +232,7 @@ void Funktionell::Write(){
 	fout << std::scientific;
 	for(auto it=Iq_c.begin();it!=Iq_c.end();it++){
 		auto h0=it->first;
-		fout << h0*dq<< " " << Iq_c[h0]*myScale<< " " << Iq_exp[h0]<<endl;
+		fout << (h0+0.5)*dq<< " " << Iq_c[h0]*myScale<< " " << Iq_exp[h0]<<endl;
 	}
 }
 double Funktionell::Energy2(double & scalePlot,double & Gscale,array3<Complex> & F_k){

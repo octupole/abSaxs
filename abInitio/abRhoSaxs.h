@@ -5,8 +5,8 @@
  *      Author: marchi
  */
 
-#ifndef SRC_RHOSAXS_H_
-#define SRC_RHOSAXS_H_
+#ifndef SRC_ABINIT_RHOSAXS_H_
+#define SRC_ABINIT_RHOSAXS_H_
 //#ifdef HAVE_VTK
 #include "vtkActor.h"
 #include "vtkCamera.h"
@@ -39,13 +39,13 @@ using namespace MATRIX;
 using namespace DVECT;
 
 using std::map;
-const int NMult=1;
 
 using namespace Enums;
 /** \brief Derived class of Grid<1>
  *         A tridimensional grid storing the atomic density.
  */
-namespace abinit{
+namespace abInitioRho{
+const int NMult=1;
 class RhoSaxs: public Grid<1> {
 protected:
 	using Matrix=MMatrix<double>;
@@ -89,9 +89,8 @@ public:
 	void WriteIt();
 	void copyIn(array3<double> &);
 	void copyOut(array3<double> &);
-
 	virtual ~RhoSaxs(){};
 	friend std::ofstream & operator<<(std::ofstream &,RhoSaxs & );
 };
 }
-#endif /* SRC_RHOSAXS_H_ */
+#endif /* SRC_ABINIT_RHOSAXS_H_ */

@@ -180,6 +180,7 @@ public:
 	template <myAtoms MM>
 	void InitSelection(vector<string> & y, Topol_NS::Topol & MyTop);
 	void initLists(Topol_NS::TopolPDB &,vector<string> &);
+	void initLists(Topol_NS::TopolPDB & top){std::vector<string> K;initLists(top,K);};
 	void CompCM();
 	float getTime();
 	template <Enums::myWriteOptions OPT>

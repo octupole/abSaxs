@@ -46,8 +46,8 @@ void ABSaxs::setUp(SaxsData * exp){
 	dz=CO[ZZ][ZZ]/static_cast<double>(nz);
 	dvol=static_cast<float>(dx*dy*dz);
 
-	Rho_in=new RhoSaxs(grid_a[XX],grid_a[YY],grid_a[ZZ],co);
-	Rho_s=new RhoSaxs(grid_b[XX],grid_b[YY],grid_b[ZZ],CO);
+	Rho_in=new abInitioRho::RhoSaxs(grid_a[XX],grid_a[YY],grid_a[ZZ],co);
+	Rho_s=new abInitioRho::RhoSaxs(grid_b[XX],grid_b[YY],grid_b[ZZ],CO);
 
 	Rho_in->initDensity(Rd);
 	Rho_s->CopySmallerRho(*Rho_in);
@@ -108,10 +108,10 @@ void ABSaxs::minLBFGS(const real_1d_array &x, double & energy, real_1d_array &gr
 	cout << "Step "<< NN++<< " Energy = "<<energy << " Grad = " << fabs(msd)<<endl;
 }
 void ABSaxs::Minimize(){
-    double epsg = 0.0001;
+    double epsg = 0.001;
     double epsf = 0;
     double epsx = 0;
-    ae_int_t maxits = 40;
+    ae_int_t maxits = 120;
     minlbfgsstate state;
     minlbfgsreport rep;
 	real_1d_array x0,grad;
@@ -125,7 +125,6 @@ void ABSaxs::Minimize(){
 	Backward3=new Pfftwpp::Pcrfft3d(nx,ny,nz,F_k,GradR);
 	Rho_s->copyOut(F_r);
 	F_r*=dvol;
-	F_r=0.001;
 	size_t M{0};
 	for(size_t o{0};o<Nx;o++)
 		for(size_t p{0};p<Ny;p++)

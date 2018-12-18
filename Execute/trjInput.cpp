@@ -15,6 +15,9 @@ trjInput::trjInput(int ntot,char ** v) {
 	inmap["-i"]=in;
 	inmap["-supcell"]=in;
 	inmap["-grid"]=in;
+	inmap["-dens"]=in;
+	inmap["-qhist"]=in;
+	inmap["-pdb"]=in;
 
 	map<string,vector<string> >::iterator it=inmap.begin();
 	for(int n=0;it!=inmap.end();++it,n++){
@@ -25,6 +28,18 @@ trjInput::trjInput(int ntot,char ** v) {
 	Usage[M++]="\t -i filein \n";
 	Usage[M++]="\t -supcell <double l>\n";
 	Usage[M++]="\t -grid <double nx, [double ny, double nz] \n";
+	Usage[M++]="\t -qhist <float dq=0.05> <float qcut=4>\n"
+			"\t\tHistogram parameters as in -saxs, but for the difference calculation.\n";
+
+	Usage[M++]="\t -dens <string select='R'> <int order=4> <int avg=2>\n"
+			"\t\t Compute electron density instead of SAXS. select=[i++] R compute on R-space\n "
+			"\t\t Q compute it from Q-space; order is the Lagrangian order; avg is how many bins\n"
+			"\t\t are averaged";
+	Usage[M++]="\t -pdb <string filename>\n"
+			"\t\tInput a PDB file containing the entire system investigated. This input file \n "
+			"\t\tis required when computing the SAXS intensity of the solvated protein or of the buffer. From this\n"
+			"\t\tfile the topology of the system is extracted.\n";
+
 	int n=1;
 	string key;
 	for(;n<ntot;){

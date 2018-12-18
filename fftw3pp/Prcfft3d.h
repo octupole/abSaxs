@@ -26,7 +26,6 @@ public:
 	}
 
 	fftw_plan Plan(Complex *in, Complex *out) {
-
 		return  fftw_mpi_plan_dft_r2c_3d(nx,ny,nz,(double *) in,(fftw_complex *) out,MPI_COMM_WORLD,
 				effort);
 	}

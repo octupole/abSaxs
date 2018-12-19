@@ -54,6 +54,8 @@ int main(int argc, char *argv[]){
 		atm->setDim(natoms);
 		atm->setTopol(MyTop);
 		atm->initLists(topPDB);
+		atm->pdb(data);
+
 	}
 
 

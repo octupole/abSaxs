@@ -37,6 +37,7 @@ class Funktionell {
 	Matrix CO,OC,co,oc;
 	double dq{0.002};
 	double qcut{1.0};
+	double qmin{0};
 	double Rd{0},Pot{1.0e6};
 	map<size_t,double> Iq_c;
 	map<size_t,double> Iq_exp;

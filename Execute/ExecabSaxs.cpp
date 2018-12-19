@@ -30,7 +30,7 @@ ExecabSaxs::ExecabSaxs(trj::TrjRead & MyIn, Topol_NS::Topol & Top0): Top{&Top0} 
 
 }
 void ExecabSaxs::__SuperCell(){
-	MySaxs->setSuperCell0(1.0);
+	MySaxs->setSuperCell0(CO[XX][XX]/co[XX][XX]);
 	double SuperCell=CO[XX][XX];
 	try{
 		if(SuperCell < 0) throw string("pdb box does not have CRYST1 keyword set, cannot compute.");
@@ -54,11 +54,10 @@ void ExecabSaxs::Run_abSaxs(MAtoms * atm){
 	if(atm){
 		myABSaxs->setUpCell(Exp);
 		myABSaxs->getMetrics(CO,co);
-
-		Metric<double> Mt(CO);
+		Matrix COn=CO/10.0;
+		Metric<double> Mt(COn);
 		atm->setMT(Mt);
-		array3<double> F=__Saxs(atm);
-
+		array3<double> & F=__Saxs(atm);
 		myABSaxs->setUpRho(Exp,F);
 	} else{
 		myABSaxs->setUpCell(Exp);
@@ -89,6 +88,7 @@ void ExecabSaxs::expSaxs(){
 		exit(1);
 	}
 	Exp=new SaxsData(x,y);
+	vector<std::pair<double,double>> & myExp=Exp->gIq_exp();
 }
 ExecabSaxs::~ExecabSaxs() {
 	// TODO Auto-generated destructor stub

@@ -106,7 +106,7 @@ void ABSaxs::minLBFGS(const real_1d_array &x, double & energy, real_1d_array &gr
 	Forward3->fft(F_r,F_k);
 	energy=myFuncx->EnergyQ(scalePlot,Gscale,F_k);
 	Backward3->fft(F_k,GradR);
-	energy+=myFuncx->EnergyR(F_r,GradR);
+//	energy+=myFuncx->EnergyR(F_r,GradR);
 	M=0;
 	double msd{-2};
 	for(size_t o{0};o<Nx;o++)
@@ -122,7 +122,7 @@ void ABSaxs::Minimize(){
     double epsg = 0.001;
     double epsf = 0;
     double epsx = 0;
-    ae_int_t maxits = 120;
+    ae_int_t maxits = 1;
     minlbfgsstate state;
     minlbfgsreport rep;
 	real_1d_array x0,grad;

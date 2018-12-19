@@ -59,7 +59,7 @@ public:
 using Dvect=DVECT::DDvect<double>;
 class TrjRead: public trjInput {
 	int MyOrder{1};
-	int MyDensAvg{4};
+	int MyDensAvg{0};
 	size_t BoxMultiply{1};
 	double Mycut{4.0};
 	double Myd{0.05};

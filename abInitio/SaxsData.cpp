@@ -28,7 +28,7 @@ void SaxsData::Generate(vector<double> & x,vector<double> & y){
 	y_s=sg_smooth(y,W,DEG);
 
 	this->x=vector<std::pair<double,double>>(x.size());
-	for(size_t o{0};o<x.size();o++){
+	for(size_t o{0};o<this->x.size();o++){
 		this->x[o].first=x[o];
 		this->x[o].second=y_s[o];
 	}
@@ -70,7 +70,6 @@ void SaxsData::Generate(vector<double> & x,vector<double> & y){
 	}
 	auto it=std::min_element(err0.begin(),err0.end());
 	Rg=Rg_s[std::distance(err0.begin(),it)];
-
 }
 
 std::pair<double,double> & SaxsData::operator [](size_t N){

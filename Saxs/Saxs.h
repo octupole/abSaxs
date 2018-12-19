@@ -124,7 +124,7 @@ protected:
 
 	virtual void Modulus(array3<Complex> &,array3<Complex> &);
 	virtual SaxsHistogram __Qhistogram();
-	virtual void __shift(AtomsD * y) {};
+	virtual void __shift(AtomsD * y, Dvect);
 public:
 	Saxs();
 	Saxs(double dq0, double qcut0): dq{dq0}, dq_orig{dq0}, qcut{qcut0}{};

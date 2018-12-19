@@ -406,32 +406,33 @@ void Saxs::WriteI_r(std::ostream & fout){
 				I_r0[o][p][q]=Val/Norm;
 			}
 // Get the average density at border
+	double AvgDens{0.0};
+	if(DensAvg !=0){
+		M=4;
+		double ISum0{0},ISum1{0};
+		for(size_t o{0};o<nx;o++)
+			for(size_t p{0};p<ny;p++)
+				for(size_t q{0};q<nz;q++){
+					ISum0+=I_r0[o][p][q];
+				}
+		for(int o{M};o<nx-M;o++)
+			for(int p{M};p<ny-M;p++)
+				for(int q{M};q<nz-M;q++){
+					ISum1+=I_r0[o][p][q];
+				}
+		double Bins=static_cast<double>((nx*ny*nz)-(nx-2*M)*(ny-2*M)*(nz-2*M));
+		AvgDens=(ISum0-ISum1)/Bins;
 
-	M=4;
-
-
-	double ISum0{0},ISum1{0};
-	for(size_t o{0};o<nx;o++)
-		for(size_t p{0};p<ny;p++)
-			for(size_t q{0};q<nz;q++){
-				ISum0+=I_r0[o][p][q];
-			}
-	for(int o{M};o<nx-M;o++)
-		for(int p{M};p<ny-M;p++)
-			for(int q{M};q<nz-M;q++){
-				ISum1+=I_r0[o][p][q];
-			}
-	double Bins=static_cast<double>((nx*ny*nz)-(nx-2*M)*(ny-2*M)*(nz-2*M));
-	double AvgDens=(ISum0-ISum1)/Bins;
-
-	int mm0{0},mm1{0};
-	for(size_t o{0};o<nx;o++){
-		for(size_t p{0};p<ny;p++){
-			for(size_t q{0};q<nz;q++){
-				I_r0[o][p][q]-=AvgDens;
+		int mm0{0},mm1{0};
+		for(size_t o{0};o<nx;o++){
+			for(size_t p{0};p<ny;p++){
+				for(size_t q{0};q<nz;q++){
+					I_r0[o][p][q]-=AvgDens;
+				}
 			}
 		}
 	}
+
 	int N_t{0};
 	for(auto it=Sfacts.begin();it!=Sfacts.end();it++){
 		auto Na=iSfacts[it->first].size();
@@ -636,7 +637,6 @@ void Saxs::ComputeSANS(RhoSaxs * Rho_ex,const MAtoms * y){
 	Nz=Rho_ex->getnnz();
 	for(auto o=0;o<DIM;o++) {co[o][o]=SuperCell;oc[o][o]=1.0/SuperCell;}
 	map<const string,ScatteringFactorsN::opsfact>::iterator it;
-	this->__shift(x0);
 //	for(it=Sfacts.begin();it!=Sfacts.end();it++){
 //		cout << it->first << " " << it->second() <<endl;
 //		auto ff=it->second;
@@ -831,7 +831,6 @@ void Saxs::ComputeSAXS(RhoSaxs * Rho_ex,const MAtoms * y,bool bDens){
 	Nz=Rho_ex->getnnz();
 	for(auto o=0;o<DIM;o++) {co[o][o]=SuperCell;oc[o][o]=1.0/SuperCell;}
 	map<const string,ScatteringFactors::opsfact>::iterator it;
-	this->__shift(x0);
 	for(it=Sfacts.begin();it!=Sfacts.end();it++){
 		Rho_e=0.0;
 		Rho_e.Density(order,x0,iSfacts[it->first],it->first);
@@ -872,6 +871,22 @@ void Saxs::ComputeSAXS(RhoSaxs * Rho_ex,const MAtoms * y,bool bDens){
 	count++;
 	delete x0;
 }
+void Saxs::__shift(MAtoms * x0,Dvect v){
+	Mt=x0->getMt();
+	Matrix co=Mt.getCO();
+	Dvect vs=co*v;
+	Dvect cm{0,0,0};
+	for(int o{0};o<x0->getNR();o++){
+		for(int p{0};p<DIM;p++)
+			cm[p]+=(*x0)[o][p];
+	}
+	cm/=(double)x0->getNR();
+	for(int o{0};o<x0->getNR();o++){
+		for(int p{0};p<DIM;p++)
+			(*x0)[o][p]+=vs[p]-cm[p];
+	}
+
+}
 void Saxs::ComputeDENS(RhoSaxs * Rho_ex,MAtoms * y){
 
 	AtomsD * x0{new MAtoms(*y)};
@@ -881,10 +896,6 @@ void Saxs::ComputeDENS(RhoSaxs * Rho_ex,MAtoms * y){
 	//SuperCell=1;
 
 	size_t nnr=x0->getNR();
-	vector<vector<int> > g=y->getSaxsSolute();
-	int tot{0};
-	for(auto op: g)for(auto oq:op)tot++;
-	Nsolute=tot;
 	RhoSaxs & Rho_e=*Rho_ex;
 
 	array3<Complex> ro_k(nx,ny,nzp,align);
@@ -911,9 +922,12 @@ void Saxs::ComputeDENS(RhoSaxs * Rho_ex,MAtoms * y){
 	Nx=Rho_ex->getnnx();
 	Ny=Rho_ex->getnny();
 	Nz=Rho_ex->getnnz();
-
+	double vs0=0.5/SuperCell0;
+	Dvect vs{vs0,vs0,vs0};
+	this->__shift(x0,vs);
 	map<const string,ScatteringFactors::opsfact>::iterator it;
-	this->__shift(x0);
+
+
 	if(DensPick["R"]){
 
 		for(it=Sfacts.begin();it!=Sfacts.end();it++){
@@ -970,6 +984,7 @@ void Saxs::ComputeDENS(RhoSaxs * Rho_ex,MAtoms * y){
 	}
 	count++;
 	delete x0;
+
 }
 
 void Saxs::Clear(){

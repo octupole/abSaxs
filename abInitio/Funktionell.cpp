@@ -12,8 +12,10 @@ struct pickPar{
 	pickPar(double &Par, double & scl,map<size_t,double> & Ie,map<size_t,double> & Ic){
 		double energy{0};
 		auto i0=Ie.begin();
+		double sc=Ic[i0->first]/Ie[i0->first];
 		for(auto it{Ie.begin()};it!=Ie.end();it++){
 			auto h0=it->first;
+			Ie[h0]*=sc;
 			double tmp=Ie[h0]-Ic[h0];
 			double wei=1.0;
 			energy+=tmp*tmp;
@@ -54,6 +56,7 @@ void Funktionell::setUpFirst(SaxsData * exp){
 		qft[h0]+=tmp[o].second;
 		nqft[h0]++;
 	}
+	qmin=qft.begin()->first*dq;
 	for(auto it{qft.begin()};it!=qft.end();it++){
 		const int h0=it->first;
 		Iq_exp[h0]=qft[h0]/static_cast<double>(nqft[h0]);
@@ -80,7 +83,7 @@ void Funktionell::setUpFirst(SaxsData * exp){
 				mw3=2.0*M_PI*mw3;
 				mw=sqrt(mw1*mw1+mw2*mw2+mw3*mw3);
 				int h0=static_cast<int>(mw/dq);
-				if(mw<qcut){
+				if(mw<qcut && mw >=qmin){
 					mapIdx[h0].push_back(vector<int>{i,j,k});
 				}
 			}
@@ -136,6 +139,7 @@ double Funktionell::EnergyQ(double & scalePlot,double & Gscale,array3<Complex> &
 			Iq_c[h0]+=vt0.real();
 		}
 		Iq_c[h0]/=static_cast<double>(vIdx.size());
+
 	}
 	static pickPar Once(Par,scalePlot,Iq_exp,Iq_c);
 	myScale=scalePlot;
@@ -196,7 +200,8 @@ double Funktionell::EnergyQQ(double & scalePlot,double & Gscale,array3<Complex> 
 	double tmp,grad;
 	for(auto it=mapIdx.begin();it != mapIdx.end();it++){
 		auto h0=it->first;
-		double wei=1.0/Iq_exp[h0];
+		double wei=1;
+//		double wei=1.0/Iq_exp[h0];
 		for(size_t o{0}; o<mapIdx[h0].size();o++){
 			size_t i=mapIdx[h0][o][XX];
 			size_t j=mapIdx[h0][o][YY];
@@ -204,17 +209,17 @@ double Funktionell::EnergyQQ(double & scalePlot,double & Gscale,array3<Complex> 
 			size_t ib=i==0?0:nx-i;
 			size_t jb=j==0?0:ny-j;
 			if(k != 0 && k != nzp-1){
-				tmp=Iq_exp[h0]-InC[i][j][k].real()*scalePlot;
+				tmp=Iq_exp[h0]-InC[i][j][k].real();
 				energy+=tmp*tmp*Par*wei;
-				grad=-2.0*Par*wei*tmp*scalePlot;
+				grad=-2.0*Par*wei*tmp;
 				Grad[i][j][k]+=grad*F_k[i][j][k];
 
-				tmp=Iq_exp[h0]-InC[ib][jb][k].real()*scalePlot;
+				tmp=Iq_exp[h0]-InC[ib][jb][k].real();
 				energy+=tmp*tmp*Par*wei;
 				grad=-2.0*Par*wei*tmp*scalePlot;
 				Grad[ib][jb][k]+=grad*F_k[ib][jb][k];
 			} else{
-				tmp=Iq_exp[h0]-InC[i][j][k].real()*scalePlot;
+				tmp=Iq_exp[h0]-InC[i][j][k].real();
 				energy+=tmp*tmp*Par*wei;
 				grad=-2.0*Par*wei*tmp*scalePlot;
 				Grad[i][j][k]+=2.0*grad*F_k[i][j][k];

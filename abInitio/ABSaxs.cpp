@@ -16,7 +16,30 @@ public:
 	}
 
 };
+class LBFGSWrapper_C{
+	static ABSaxs * inst;
+public:
+	static void setInstance(ABSaxs * x){inst=x;}
+	static void myFunc(const real_1d_array &x, double &func, real_1d_array &grad, void *ptr){
+		return inst->minLBFGS_C(x,func,grad,ptr);
+	}
+
+};
 ABSaxs * LBFGSWrapper::inst=nullptr;
+ABSaxs * LBFGSWrapper_C::inst=nullptr;
+void ABSaxs::testDensity(array3<double> & F){
+	double avg{0},mMax{-1}, mMin{1};
+	int M{0};
+	for(size_t o{0};o<F.Nx()*F.Ny()*F.Nz();o++){
+		double tmp=*(&F[0][0][0]+o);
+		if(fabs(tmp) <1.0e-5) continue;
+		avg+=tmp;
+		if(mMax <tmp)mMax=tmp;
+		if(mMin >tmp)mMin=tmp;
+		M++;
+		}
+	cout << avg/(double) (M) << " -- " << mMax << " " <<mMin<< " " << M<<endl;;
+}
 ABSaxs::ABSaxs(uint nx, uint ny, uint nz, double SupCell): grid_b{nx,ny,nz},
 		nx{nx},ny{ny},nz{nz},nzp{nz/2+1},SuperCell{SupCell} {
 		}
@@ -28,6 +51,13 @@ void ABSaxs::setUpRho(SaxsData * exp){
 
 }
 void ABSaxs::setUpRho(SaxsData * exp,array3<double> & F_r){
+	try{
+	if(!bCellCalled) throw string("Cannot call setUpRho before setUpCell.");
+	}catch(const string & s){
+		cout << s <<endl;
+		exit(1);
+	}
+	F_r/=dvol;
 	for(size_t o{0};o<F_r.Nx();o++)
 		for(size_t p{0};p<F_r.Ny();p++)
 			for(size_t q{0};q<F_r.Nz();q++)
@@ -37,6 +67,7 @@ void ABSaxs::setUpRho(SaxsData * exp,array3<double> & F_r){
 }
 
 void ABSaxs::setUpCell(SaxsData * exp){
+	this->bCellCalled=true;
 	double Rg=exp->getRg();
 	double Rd=exp->Rd();
 	metric(Rd);
@@ -69,7 +100,8 @@ void ABSaxs::setUpCell(SaxsData * exp){
      alloc_local = fftw_mpi_local_size_3d(nx, ny, nzp, MPI_COMM_WORLD,
                                             &local_n0, &local_0_start);
 
- 	F_k.Allocate(grid_b[XX],grid_b[YY],nzp,Calign);
+  	F_k.Allocate(grid_b[XX],grid_b[YY],nzp,Calign);
+ 	F_k0.Allocate(grid_b[XX],grid_b[YY],nzp,Calign);
 	F_r.Allocate(grid_b[XX],grid_b[YY],nzp*2,Ralign);
 	GradR.Allocate(grid_b[XX],grid_b[YY],nzp*2,Ralign);
 	I_k.Allocate(grid_b[XX],grid_b[YY],nzp,Calign);
@@ -79,8 +111,8 @@ void ABSaxs::setUpCell(SaxsData * exp){
 	cout << CO;
 }
 void ABSaxs::Run(){
-	Minimize();
-//	this->testGradient();
+	Minimize_C();
+//	this->testGradient_C();
 }
 array3<Complex> ABSaxs::Modulus(array3<Complex> & ro_k){
 	array3<Complex> ro_k1(nx,ny,nzp);
@@ -104,9 +136,8 @@ void ABSaxs::minLBFGS(const real_1d_array &x, double & energy, real_1d_array &gr
 				F_r[o][p][q]=x[M++];
 			}
 	Forward3->fft(F_r,F_k);
-	energy=myFuncx->EnergyQ(scalePlot,Gscale,F_k);
+	energy=myFuncx->EnergyQ(A_0,A_1,F_k);
 	Backward3->fft(F_k,GradR);
-//	energy+=myFuncx->EnergyR(F_r,GradR);
 	M=0;
 	double msd{-2};
 	for(size_t o{0};o<Nx;o++)
@@ -118,11 +149,57 @@ void ABSaxs::minLBFGS(const real_1d_array &x, double & energy, real_1d_array &gr
 	cout << std::scientific;
 	cout << "Step "<< NN++<< " Energy = "<<energy << " Grad = " << fabs(msd)<<endl;
 }
+void ABSaxs::minLBFGS_C(const real_1d_array &x, double & energy, real_1d_array &grad, void *ptr){
+	size_t M{0};
+	static int NN=0;
+	F_k0=Complex{0.0,0.0};
+
+	auto mapIdx=myFuncx->getIdx();
+	for(auto it=mapIdx.begin();it != mapIdx.end();it++){
+		auto h0=it->first;
+		for(size_t o{0}; o<mapIdx[h0].size();o++){
+			size_t i=mapIdx[h0][o][XX];
+			size_t j=mapIdx[h0][o][YY];
+			size_t k=mapIdx[h0][o][ZZ];
+			F_k0[i][j][k]=Complex{x[M++],x[M++]};
+		}
+	}
+	energy=myFuncx->EnergyQ(A_0,A_1,F_k0);
+	M=0;
+	for(auto it=mapIdx.begin();it != mapIdx.end();it++){
+		auto h0=it->first;
+		for(size_t o{0}; o<mapIdx[h0].size();o++){
+			size_t i=mapIdx[h0][o][XX];
+			size_t j=mapIdx[h0][o][YY];
+			size_t k=mapIdx[h0][o][ZZ];
+			grad[M++]=2.0*F_k0[i][j][k].real();
+			grad[M++]=2.0*F_k0[i][j][k].imag();
+		}
+	}
+
+	double msd{-2};
+	for(size_t o{0};o<M;o++){
+		if(msd< fabs(grad[o])) msd=fabs(grad[o]);
+	}
+	cout << std::scientific;
+	cout << "Step "<< NN++<< " Energy = "<<energy << " Grad = " << fabs(msd)<<endl;
+}
+void ABSaxs::subtract(array3<double> & F){
+	for(size_t o{0};o<F.Size();o++){
+		auto & tmp=*(&F[0][0][0]+o);
+		if(tmp < wDensity*0.5){
+			tmp=0.0;
+		}else{
+			tmp-=wDensity;
+		}
+	}
+
+}
 void ABSaxs::Minimize(){
     double epsg = 0.001;
     double epsf = 0;
     double epsx = 0;
-    ae_int_t maxits = 1;
+    ae_int_t maxits = 200;
     minlbfgsstate state;
     minlbfgsreport rep;
 	real_1d_array x0,grad;
@@ -134,8 +211,21 @@ void ABSaxs::Minimize(){
 
 	Forward3 =new Pfftwpp::Prcfft3d(nx,ny,nz,F_r,F_k);
 	Backward3=new Pfftwpp::Pcrfft3d(nx,ny,nz,F_k,GradR);
+
 	Rho_s->copyOut(F_r);
+
 	F_r*=dvol;
+	Forward3->fft(F_r,F_k);
+	myFuncx->ComputeIqc(F_k);
+	auto Iqc=myFuncx->getIqc();
+	auto Iqe=myFuncx->getIqe();
+	dq=myFuncx->getMydq();
+
+	this->fitSaxs(Iqe,Iqc);
+	Rho_s->copyOut(F_r);
+	this->subtract(F_r);
+	F_r*=dvol;
+
 	size_t M{0};
 	for(size_t o{0};o<Nx;o++)
 		for(size_t p{0};p<Ny;p++)
@@ -144,13 +234,85 @@ void ABSaxs::Minimize(){
 			}
 	LBFGSWrapper::setInstance(this);
 
-    minlbfgscreate(3, x0, state);
+    minlbfgscreate(6, x0, state);
     minlbfgssetcond(state, epsg, epsf, epsx, maxits);
     minlbfgssetxrep(state, true);
 
     alglib::minlbfgsoptimize(state, &LBFGSWrapper::myFunc);
     minlbfgsresults(state, x0, rep);
     Rho_s->copyIn(F_r);
+    Rho_s->WriteIt();
+    myFuncx->Write();
+}
+void ABSaxs::Minimize_C(){
+    double epsg = 0.0001;
+    double epsf = 0;
+    double epsx = 0;
+    ae_int_t maxits = 2000;
+    minlbfgsstate state;
+    minlbfgsreport rep;
+	real_1d_array x0,grad;
+	/*
+	 * Arrays are destroyed while performing plan!!!
+	 */
+
+	Forward3 =new Pfftwpp::Prcfft3d(nx,ny,nz,F_r,F_k);
+	Backward3=new Pfftwpp::Pcrfft3d(nx,ny,nz,F_k,F_r);
+
+	Rho_s->copyOut(F_r);
+	this->subtract(F_r);
+	F_r*=dvol;
+	Forward3->fft(F_r,F_k);
+	myFuncx->ComputeIqc(F_k);
+
+	auto Iqc=myFuncx->getIqc();
+	auto Iqe=myFuncx->getIqe();
+	auto mapIdx=myFuncx->getIdx();
+	dq=myFuncx->getMydq();
+
+	this->fitSaxs(Iqe,Iqc);
+	size_t M{0};
+	for(auto it=mapIdx.begin();it != mapIdx.end();it++){
+		auto h0=it->first;
+		for(size_t o{0}; o<mapIdx[h0].size();o++){
+			M+=2;
+		}
+	}
+
+	x0.setlength(M);
+	grad.setlength(M);
+
+	M=0;
+	for(auto it=mapIdx.begin();it != mapIdx.end();it++){
+		auto h0=it->first;
+		for(size_t o{0}; o<mapIdx[h0].size();o++){
+			size_t i=mapIdx[h0][o][XX];
+			size_t j=mapIdx[h0][o][YY];
+			size_t k=mapIdx[h0][o][ZZ];
+			x0[M++]=F_k[i][j][k].real();
+			x0[M++]=F_k[i][j][k].imag();
+		}
+	}
+	LBFGSWrapper_C::setInstance(this);
+
+    minlbfgscreate(6, x0, state);
+    minlbfgssetcond(state, epsg, epsf, epsx, maxits);
+    minlbfgssetxrep(state, true);
+
+    alglib::minlbfgsoptimize(state, &LBFGSWrapper_C::myFunc);
+    minlbfgsresults(state, x0, rep);
+	M=0;
+	for(auto it=mapIdx.begin();it != mapIdx.end();it++){
+		auto h0=it->first;
+		for(size_t o{0}; o<mapIdx[h0].size();o++){
+			size_t i=mapIdx[h0][o][XX];
+			size_t j=mapIdx[h0][o][YY];
+			size_t k=mapIdx[h0][o][ZZ];
+			F_k[i][j][k]=Complex{x0[M++],x0[M++]};
+		}
+	}
+	Backward3->fftNormalized(F_k,F_r);
+	Rho_s->copyIn(F_r);
     Rho_s->WriteIt();
     myFuncx->Write();
 }
@@ -168,17 +330,27 @@ void ABSaxs::testGradient(){
 	Forward3 =new Pfftwpp::Prcfft3d(nx,ny,nz,F_r,F_k);
 	Backward3=new Pfftwpp::Pcrfft3d(nx,ny,nz,F_k,GradR);
 	Rho_s->copyOut(F_r);
-	F_r[2][2][3]=0.2;
 	F_r*=dvol;
+	Forward3->fft(F_r,F_k);
+	myFuncx->ComputeIqc(F_k);
+	auto Iqc=myFuncx->getIqc();
+	auto Iqe=myFuncx->getIqe();
+	dq=myFuncx->getMydq();
+
+	this->fitSaxs(Iqe,Iqc);
+	Rho_s->copyOut(F_r);
+	F_r*=dvol;
+
 	size_t M{0};
 	for(size_t o{0};o<Nx;o++)
 		for(size_t p{0};p<Ny;p++)
 			for(size_t q{0};q<Nz;q++){
 				x0[M++]=F_r[o][p][q];
 			}
-	cout << F_r[2][2][3] <<endl;
+
+
 	double c=F_r[2][2][3];
-	double delta=0.2,eps=0.002;
+	double delta=0.2,eps=0.02;
 	double Beg{-delta*0.5};
 	double End{delta*0.5};
 	vector<double> ee{0,0,0};
@@ -187,13 +359,92 @@ void ABSaxs::testGradient(){
 	auto time1=MPI_Wtime();
 	for(auto o{Beg};o<=End;o+=delta*0.5){
 		F_r[2][2][3]=c+o;
-		x0[2*Nz*Ny+3*Nz+3]=c+o;
+		x0[2*Nz*Ny+2*Nz+3]=c+o;
 		cout<< "o = " << o ;
 		double E;
 		this->minLBFGS(x0, E,grad, myptr);
 		ee[M++]=E;
 		cout << " E =" << E;
 		cout <<" Grad " << GradR[2][2][3]<<endl;
+	}
+	cout << (ee[2]-ee[0])/delta<< endl;
+	auto time2=MPI_Wtime();
+
+	cout << time2-time1<<endl;
+}
+void ABSaxs::testGradient_C(){
+	unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+	std::default_random_engine generator (seed);
+	std::uniform_real_distribution<double> distribution (0.0,1.0);
+
+	real_1d_array x0,grad;
+	Forward3 =new Pfftwpp::Prcfft3d(nx,ny,nz,F_r,F_k);
+	Backward3=new Pfftwpp::Pcrfft3d(nx,ny,nz,F_k,F_r);
+	array3<Complex> G(F_k);
+	Rho_s->copyOut(F_r);
+	for(auto o=0;o<F_r.Size();o++)
+		*(&F_r[0][0][0]+o)=distribution(generator);
+	F_r*=dvol;
+	Forward3->fft(F_r,F_k);
+	myFuncx->ComputeIqc(F_k);
+	auto Iqc=myFuncx->getIqc();
+	auto Iqe=myFuncx->getIqe();
+	auto mapIdx=myFuncx->getIdx();
+	dq=myFuncx->getMydq();
+
+	this->fitSaxs(Iqe,Iqc);
+
+	cout << F_k[2][2][3].real() <<endl;
+
+	double c1=F_k[2][2][3].imag();
+	double c=F_k[2][2][3].real();
+
+	double delta=0.2,eps=0.002;
+	double Beg{-delta*0.5};
+	double End{delta*0.5};
+	vector<double> ee{0,0,0};
+	int M=0;
+	void * myptr{nullptr};
+
+	for(auto it=mapIdx.begin();it != mapIdx.end();it++){
+		auto h0=it->first;
+		for(size_t o{0}; o<mapIdx[h0].size();o++){
+			M+=2;
+		}
+	}
+	x0.setlength(M);
+	grad.setlength(M);
+	auto time1=MPI_Wtime();
+	int MM{0};
+	M=0;
+	int key0{0},key1{0};
+	for(auto it=mapIdx.begin();it != mapIdx.end();it++){
+		auto h0=it->first;
+		for(size_t o{0}; o<mapIdx[h0].size();o++){
+			size_t i=mapIdx[h0][o][XX];
+			size_t j=mapIdx[h0][o][YY];
+			size_t k=mapIdx[h0][o][ZZ];
+			if(i == 2 && j == 2 && k == 3) {
+				cout << M+1 << endl;
+			}
+			x0[M++]=F_k[i][j][k].real();
+			x0[M++]=F_k[i][j][k].imag();
+			if(i == 0 && j == 2 && k == 12) {
+				key0=M-2;key1=M-1;
+			}
+		}
+	}
+		cout << key0<<endl;
+		cout << x0[key1]<< " " << F_k[0][2][12].imag()<<endl;
+	for(auto o{Beg};o<=End;o+=delta*0.5){
+		F_k[0][2][12]=Complex{c+o,c1};
+		x0[key1]=c+o;
+		cout<< "o = " << o ;
+		double E;
+		this->minLBFGS_C(x0, E,grad, myptr);
+		ee[MM++]=E;
+		cout << " E =" << E;
+		cout <<" Grad " << grad[key1] <<endl;
 	}
 	cout << (ee[2]-ee[0])/delta<< endl;
 	auto time2=MPI_Wtime();
@@ -295,6 +546,40 @@ void ABSaxs::__qhistogram(){
 
 
 }
+void ABSaxs::fitSaxs(map<size_t,double> & Iqe, map<size_t,double> & Iqc){
+	real_2d_array xy;
+	real_1d_array S;
+	xy.setlength(Iqe.size(),2);
+	S.setlength(Iqe.size());
+	int o{0};
+	for(auto op{Iqe.begin()};op!=Iqe.end();op++){
+		auto h0=op->first;
+		xy[o][0]=Iqc[h0];
+		xy[o][1]=Iqe[h0];
+		S[o]=xy[o][1];
+		o++;
+	}
+	ae_int_t info;
+    ae_int_t nvars;
+    linearmodel model;
+    lrreport rep;
+    real_1d_array c;
+    lrbuilds(xy,S,Iqe.size(), 1, info, model, rep);
+
+    lrunpack(model, c, nvars);
+
+    A_0=c[0];
+    A_1=c[1];
+//    o=0;
+//    for(auto op{Iqe.begin()};op!=Iqe.end();op++){
+//    	auto h0=op->first;
+//    	double y=(c[0]*Iqc[h0]+c[1]);
+//    	cout << (h0+0.5)*dq <<" "<< y<< " " << Iqc[h0]<< " "<<Iqe[h0]<<endl;
+//    	o++;
+//    }
+// 	exit(1);
+}
+
 ABSaxs::~ABSaxs() {
 	// TODO Auto-generated destructor stub
 }

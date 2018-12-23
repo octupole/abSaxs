@@ -116,6 +116,7 @@ void RhoSaxs::copyOut(array3<double> & ro){
 			}
 }
 void RhoSaxs::WriteIt(){
+	double dvol=static_cast<float>(dx*dy*dz);
 	unsigned int nx=this->getnnx();
 	unsigned int ny=this->getnny();
 	unsigned int nz=this->getnnz();
@@ -144,7 +145,7 @@ void RhoSaxs::WriteIt(){
 	    		int offset = i + jOffset + kOffset;
 	    		x[XX]=dx*i;
 
-	    		float Val=(*this)[0][i][j][k];
+	    		float Val=(*this)[0][i][j][k]/dvol;
 	    		points->InsertPoint(offset,x);
 	    		scalars->InsertValue(offset,Val);
 	    	}

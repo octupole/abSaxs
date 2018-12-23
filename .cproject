@@ -27,7 +27,7 @@
 								<option defaultValue="gnu.cpp.compiler.debugging.level.none" id="gnu.cpp.compiler.option.debugging.level.190800136" name="Debug Level" superClass="gnu.cpp.compiler.option.debugging.level" useByScannerDiscovery="false" valueType="enumerated"/>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.cpp.compiler.option.include.paths.1407155202" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="/usr/local/Cellar/vtk/8.1.2/include/vtk-8.1"/>
-									<listOptionValue builtIn="false" value="/usr/local/include/vtk-8.2"/>
+									<listOptionValue builtIn="false" value="/usr/local/Cellar/vtk/8.1.1_2/include/vtk-8.1"/>
 									<listOptionValue builtIn="false" value="/usr/local/include"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.713190573" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>

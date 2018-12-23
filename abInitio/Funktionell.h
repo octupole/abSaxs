@@ -46,17 +46,20 @@ class Funktionell {
 
 	void setUpFirst(SaxsData *);
 	array3<Complex> Modulus(array3<Complex> &);
-	double Par{1.0};
-	double myScale{1};
+	double Par{100.0};
+	double A_1{1},A_0{0};
 public:
 	Funktionell()=delete;
 	Funktionell(abInitioRho::RhoSaxs *,abInitioRho::RhoSaxs *,SaxsData *);
 	double EnergyQ(double &,double &,array3<Complex> &);
-	double EnergyQQ(double &,double &,array3<Complex> &);
+
+	void ComputeIqc(array3<Complex> &);
 	double EnergyR(array3<double> &, array3<double> &);
-	double Energy2(double &,double &,array3<Complex> &);
-	double Deviate2(array3<Complex> &);
+	map<size_t,double> & getIqc(){return Iq_c;};
+	map<size_t,double> & getIqe(){return Iq_exp;};
+	map<size_t,vector<vector<int>>> & getIdx(){return mapIdx;};
 	void Write();
+	double getMydq(){return dq;};
 	virtual ~Funktionell();
 };
 

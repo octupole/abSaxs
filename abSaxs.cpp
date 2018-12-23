@@ -59,7 +59,6 @@ int main(int argc, char *argv[]){
 	}
 
 
-	cout << "Here "<<endl;
 	MyRun=new ExecabSaxs(MyIn,MyTop);
 	MyRun->Run_abSaxs(atm);
     MPI_Finalize();

@@ -889,7 +889,8 @@ void Saxs::__shift(MAtoms * x0,Dvect v){
 }
 void Saxs::ComputeDENS(RhoSaxs * Rho_ex,MAtoms * y){
 
-	AtomsD * x0{new MAtoms(*y)};
+//	AtomsD * x0{new MAtoms(*y)};
+	AtomsD * x0=y;
 
 
 	//SuperCell0=1;
@@ -983,7 +984,7 @@ void Saxs::ComputeDENS(RhoSaxs * Rho_ex,MAtoms * y){
 
 	}
 	count++;
-	delete x0;
+//	delete x0;
 
 }
 

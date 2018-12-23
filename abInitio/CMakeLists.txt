@@ -11,5 +11,5 @@ add_library(absaxs STATIC ${SOURCE})
 
 target_include_directories(absaxs PUBLIC "${PROJECT_SOURCE_DIR}/Execute" "${PROJECT_SOURCE_DIR}/utils" 
 	"${PROJECT_SOURCE_DIR}/include" "${PROJECT_SOURCE_DIR}/libalg" "${PROJECT_SOURCE_DIR}/fftw3pp"
-	"${PROJECT_SOURCE_DIR}/libtraj") 
+	"${PROJECT_SOURCE_DIR}/libtraj" "${PROJECT_SOURCE_DIR}/Saxs") 
 

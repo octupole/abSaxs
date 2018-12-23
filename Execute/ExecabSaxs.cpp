@@ -25,9 +25,6 @@ ExecabSaxs::ExecabSaxs(trj::TrjRead & MyIn, Topol_NS::Topol & Top0): Top{&Top0} 
 	myDens=MyIn.gModeCompute();
 	myDensAvg=MyIn.gMyDensAvg();
 	MySaxs->setDens(myDensAvg,fileDens,myDens);
-	cout << "There 4"<<endl;
-
-
 }
 void ExecabSaxs::__SuperCell(){
 	MySaxs->setSuperCell0(CO[XX][XX]/co[XX][XX]);
@@ -47,6 +44,9 @@ array3<double> & ExecabSaxs::__Saxs(MAtoms * atm){
 
 	Rho_ex->Allocate(nx,ny,nz);
 	MySaxs->ComputeDENS(Rho_ex,atm);
+	ofstream fout_pdb("output.pdb",ios::out);
+	atm->PrintAll(fout_pdb);
+	fout_pdb.close();
 	return MySaxs->getI_r();
 }
 void ExecabSaxs::Run_abSaxs(MAtoms * atm){

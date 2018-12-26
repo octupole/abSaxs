@@ -30,6 +30,7 @@ ABSaxs * LBFGSWrapper_C::inst=nullptr;
 void ABSaxs::testDensity(array3<double> & F){
 	double avg{0},mMax{-1}, mMin{1};
 	int M{0};
+	double intgr{0.0};
 	for(size_t o{0};o<F.Nx()*F.Ny()*F.Nz();o++){
 		double tmp=*(&F[0][0][0]+o);
 		if(fabs(tmp) <1.0e-5) continue;
@@ -38,7 +39,7 @@ void ABSaxs::testDensity(array3<double> & F){
 		if(mMin >tmp)mMin=tmp;
 		M++;
 		}
-	cout << avg/(double) (M) << " -- " << mMax << " " <<mMin<< " " << M<<endl;;
+	cout <<" Total electrons "<< avg*dvol << " Max= " << mMax << " Min = " <<mMin<< " " << M<<endl;;
 }
 ABSaxs::ABSaxs(uint nx, uint ny, uint nz, double SupCell): grid_b{nx,ny,nz},
 		nx{nx},ny{ny},nz{nz},nzp{nz/2+1},SuperCell{SupCell} {
@@ -48,7 +49,6 @@ void ABSaxs::setUpRho(SaxsData * exp){
 	Rho_in->initDensity(Rd);
 	Rho_s->PartialCopy(*Rho_in);
 	myFuncx=new Funkll::Funktionell(Rho_s,Rho_in,exp);
-
 }
 void ABSaxs::setUpRho(SaxsData * exp,array3<double> & F_r){
 	try{
@@ -102,6 +102,7 @@ void ABSaxs::setUpCell(SaxsData * exp){
 
   	F_k.Allocate(grid_b[XX],grid_b[YY],nzp,Calign);
  	F_k0.Allocate(grid_b[XX],grid_b[YY],nzp,Calign);
+ 	DGrad.Allocate(grid_b[XX],grid_b[YY],nzp,Calign);
 	F_r.Allocate(grid_b[XX],grid_b[YY],nzp*2,Ralign);
 	GradR.Allocate(grid_b[XX],grid_b[YY],nzp*2,Ralign);
 	I_k.Allocate(grid_b[XX],grid_b[YY],nzp,Calign);
@@ -111,8 +112,8 @@ void ABSaxs::setUpCell(SaxsData * exp){
 	cout << CO;
 }
 void ABSaxs::Run(){
-	Minimize_C();
-//	this->testGradient_C();
+	Minimize();
+//	this->testGradient();
 }
 array3<Complex> ABSaxs::Modulus(array3<Complex> & ro_k){
 	array3<Complex> ro_k1(nx,ny,nzp);
@@ -134,20 +135,26 @@ void ABSaxs::minLBFGS(const real_1d_array &x, double & energy, real_1d_array &gr
 		for(size_t p{0};p<Ny;p++)
 			for(size_t q{0};q<Nz;q++){
 				F_r[o][p][q]=x[M++];
+				GradR[o][p][q]=0;
 			}
 	Forward3->fft(F_r,F_k);
-	energy=myFuncx->EnergyQ(A_0,A_1,F_k);
+	energy=0;
+	energy+=myFuncx->EnergyQ(A_0,A_1,F_k);
 	Backward3->fft(F_k,GradR);
+	double myRg{0};
+	energy+=myFuncx->EnergyR(myRg,F_r,GradR);
 	M=0;
 	double msd{-2};
 	for(size_t o{0};o<Nx;o++)
 		for(size_t p{0};p<Ny;p++)
 			for(size_t q{0};q<Nz;q++){
-				grad[M++]=GradR[o][p][q];
-				if(msd < fabs(grad[M-1])) msd=fabs(grad[M-1]);
+				grad[M]=GradR[o][p][q];
+				if(msd < fabs(grad[M])) msd=fabs(grad[M]);
+				M++;
 			}
 	cout << std::scientific;
-	cout << "Step "<< NN++<< " Energy = "<<energy << " Grad = " << fabs(msd)<<endl;
+	cout << "Step "<< NN++<< " Energy = "<<energy << " Grad = " << fabs(msd)
+			<<" Rg = "<< std::fixed<<myRg<<endl;
 }
 void ABSaxs::minLBFGS_C(const real_1d_array &x, double & energy, real_1d_array &grad, void *ptr){
 	size_t M{0};
@@ -166,14 +173,16 @@ void ABSaxs::minLBFGS_C(const real_1d_array &x, double & energy, real_1d_array &
 	}
 	energy=myFuncx->EnergyQ(A_0,A_1,F_k0);
 	M=0;
+	double ddd{1};
 	for(auto it=mapIdx.begin();it != mapIdx.end();it++){
 		auto h0=it->first;
 		for(size_t o{0}; o<mapIdx[h0].size();o++){
 			size_t i=mapIdx[h0][o][XX];
 			size_t j=mapIdx[h0][o][YY];
 			size_t k=mapIdx[h0][o][ZZ];
-			grad[M++]=2.0*F_k0[i][j][k].real();
-			grad[M++]=2.0*F_k0[i][j][k].imag();
+			grad[M]=2.0*F_k0[i][j][k].real();
+			grad[M+1]=2.0*F_k0[i][j][k].imag();
+			M+=2;
 		}
 	}
 
@@ -182,12 +191,13 @@ void ABSaxs::minLBFGS_C(const real_1d_array &x, double & energy, real_1d_array &
 		if(msd< fabs(grad[o])) msd=fabs(grad[o]);
 	}
 	cout << std::scientific;
+
 	cout << "Step "<< NN++<< " Energy = "<<energy << " Grad = " << fabs(msd)<<endl;
 }
 void ABSaxs::subtract(array3<double> & F){
 	for(size_t o{0};o<F.Size();o++){
 		auto & tmp=*(&F[0][0][0]+o);
-		if(tmp < wDensity*0.5){
+		if(tmp < wDensity){
 			tmp=0.0;
 		}else{
 			tmp-=wDensity;
@@ -196,11 +206,11 @@ void ABSaxs::subtract(array3<double> & F){
 
 }
 void ABSaxs::Minimize(){
-    double epsg = 0.001;
+    double epsg = 0.01;
     double epsf = 0;
     double epsx = 0;
-    ae_int_t maxits = 200;
-    minlbfgsstate state;
+    ae_int_t maxits = 0;
+
     minlbfgsreport rep;
 	real_1d_array x0,grad;
 	x0.setlength(Nx*Ny*Nz);
@@ -213,7 +223,8 @@ void ABSaxs::Minimize(){
 	Backward3=new Pfftwpp::Pcrfft3d(nx,ny,nz,F_k,GradR);
 
 	Rho_s->copyOut(F_r);
-
+	this->subtract(F_r);
+	this->_radius();
 	F_r*=dvol;
 	Forward3->fft(F_r,F_k);
 	myFuncx->ComputeIqc(F_k);
@@ -222,10 +233,12 @@ void ABSaxs::Minimize(){
 	dq=myFuncx->getMydq();
 
 	this->fitSaxs(Iqe,Iqc);
+	A_0=1;
+	A_1=0;
+
 	Rho_s->copyOut(F_r);
 	this->subtract(F_r);
 	F_r*=dvol;
-
 	size_t M{0};
 	for(size_t o{0};o<Nx;o++)
 		for(size_t p{0};p<Ny;p++)
@@ -234,22 +247,25 @@ void ABSaxs::Minimize(){
 			}
 	LBFGSWrapper::setInstance(this);
 
-    minlbfgscreate(6, x0, state);
+    minlbfgscreate(5, x0, state);
     minlbfgssetcond(state, epsg, epsf, epsx, maxits);
     minlbfgssetxrep(state, true);
 
     alglib::minlbfgsoptimize(state, &LBFGSWrapper::myFunc);
     minlbfgsresults(state, x0, rep);
+
+	(*Rho_s)=0;
+	this->_radius();
     Rho_s->copyIn(F_r);
     Rho_s->WriteIt();
     myFuncx->Write();
 }
 void ABSaxs::Minimize_C(){
-    double epsg = 0.0001;
+    double epsg = 0.001;
     double epsf = 0;
     double epsx = 0;
-    ae_int_t maxits = 2000;
-    minlbfgsstate state;
+    ae_int_t maxits = 20;
+
     minlbfgsreport rep;
 	real_1d_array x0,grad;
 	/*
@@ -259,12 +275,15 @@ void ABSaxs::Minimize_C(){
 	Forward3 =new Pfftwpp::Prcfft3d(nx,ny,nz,F_r,F_k);
 	Backward3=new Pfftwpp::Pcrfft3d(nx,ny,nz,F_k,F_r);
 
+
 	Rho_s->copyOut(F_r);
+	this->_radius();
 	this->subtract(F_r);
+//	this->testDensity(F_r);exit(1);
+
 	F_r*=dvol;
 	Forward3->fft(F_r,F_k);
 	myFuncx->ComputeIqc(F_k);
-
 	auto Iqc=myFuncx->getIqc();
 	auto Iqe=myFuncx->getIqe();
 	auto mapIdx=myFuncx->getIdx();
@@ -281,6 +300,9 @@ void ABSaxs::Minimize_C(){
 
 	x0.setlength(M);
 	grad.setlength(M);
+	dgrad.setlength(M);
+//	alglib::minlbfgssetprecdiag(state,dgrad);
+
 
 	M=0;
 	for(auto it=mapIdx.begin();it != mapIdx.end();it++){
@@ -312,9 +334,55 @@ void ABSaxs::Minimize_C(){
 		}
 	}
 	Backward3->fftNormalized(F_k,F_r);
+
+
 	Rho_s->copyIn(F_r);
     Rho_s->WriteIt();
+	this->_radius();
     myFuncx->Write();
+}
+void ABSaxs::_radius(){
+	Dvect c0;
+	double norm{0};
+	size_t N{0};
+//	for(size_t o{0};o<nx;o++)
+//		for(size_t p{0};p<ny;p++)
+//			for(size_t q{0};q<nzp*2;q++){
+//				if(fabs(F_r[o][p][q])< 0.09)F_r[o][p][q]=0;
+//			}
+	for(size_t o{0};o<Nx;o++)
+		for(size_t p{0};p<Ny;p++)
+			for(size_t q{0};q<Nz;q++){
+				double x0=o*dx;
+				double y0=p*dy;
+				double z0=q*dz;
+				double density=F_r[o][p][q];
+				c0[XX]+=x0*density;
+				c0[YY]+=y0*density;
+				c0[ZZ]+=z0*density;
+				norm+=density;
+			}
+	for(size_t o{0};o<3;o++)
+		c0[o]/=norm;
+	double Rg{0};
+	N=0;
+	for(size_t o{0};o<Nx;o++)
+		for(size_t p{0};p<Ny;p++)
+			for(size_t q{0};q<Nz;q++){
+				double x0=o*dx;
+				double y0=p*dy;
+				double z0=q*dz;
+				double x1=c0[XX]-x0;
+				double y1=c0[YY]-y0;
+				double z1=c0[ZZ]-z0;
+				double density=F_r[o][p][q];
+				Rg+=(x1*x1+y1*y1+z1*z1)*density;
+				N++;
+
+			}
+	Rg/=norm;
+	cout << "Rg = "<<sqrt(Rg) <<" " << norm<<endl;
+
 }
 void ABSaxs::testMinim(){
 
@@ -350,7 +418,7 @@ void ABSaxs::testGradient(){
 
 
 	double c=F_r[2][2][3];
-	double delta=0.2,eps=0.02;
+	double delta=0.002,eps=0.002;
 	double Beg{-delta*0.5};
 	double End{delta*0.5};
 	vector<double> ee{0,0,0};
@@ -360,7 +428,6 @@ void ABSaxs::testGradient(){
 	for(auto o{Beg};o<=End;o+=delta*0.5){
 		F_r[2][2][3]=c+o;
 		x0[2*Nz*Ny+2*Nz+3]=c+o;
-		cout<< "o = " << o ;
 		double E;
 		this->minLBFGS(x0, E,grad, myptr);
 		ee[M++]=E;
@@ -502,7 +569,6 @@ void ABSaxs::__qhistogram(){
 	}
 	map<unsigned int,double> qdf;
 	map<uint,uint> qdn;
-	cout << dq << " " <<endl;
 
 	for(auto i=0;i<nx;i++){
 		int ia=(i<nfx)?i : i-nx;

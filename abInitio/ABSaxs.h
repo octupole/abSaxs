@@ -64,6 +64,8 @@ class ABSaxs {
 	Pfftwpp::Pcrfft3d * Backward3{nullptr};
 	array3<Complex> F_k;
 	array3<Complex> F_k0;
+	array3<Complex> DGrad;
+	real_1d_array dgrad;
 	array3<double> F_r;
 	array3<double> GradR;
 
@@ -76,7 +78,9 @@ class ABSaxs {
 	double scalePlot{0};
 	double Gscale{0};
 	bool bCellCalled{false};
+	void _radius();
 	void subtract(array3<double>&);
+    minlbfgsstate state;
 public:
 	ABSaxs()=delete;
 	ABSaxs(uint, uint, uint, double=1.0);

@@ -17,7 +17,7 @@ void SaxsData::Generate(vector<double> & x,vector<double> & y){
 	int W{1};
 	const int SEGM{10},SKIP{5};
 	double qcut{0.07};
-	W=(double) x.size()/8.0;
+	W=(double) x.size()/12.0;
 	ae_int_t basisFuncs{2};
 	ae_int_t info;
 	barycentricinterpolant p;
@@ -27,11 +27,6 @@ void SaxsData::Generate(vector<double> & x,vector<double> & y){
 	vector<double> y_s;
 	y_s=sg_smooth(y,W,DEG);
 
-	this->x=vector<std::pair<double,double>>(x.size());
-	for(size_t o{0};o<this->x.size();o++){
-		this->x[o].first=x[o];
-		this->x[o].second=y_s[o];
-	}
 	for( auto x0: x){
 		if(x0 <= qcut) regrMax++;
 	}
@@ -40,7 +35,7 @@ void SaxsData::Generate(vector<double> & x,vector<double> & y){
 	int M{(int) mm-SEGM};
 	int Mtime{M/SKIP};
 
-	vector<double> Rg_s,err0;
+	vector<double> I_0,Rg_s,err0;
 	for(int o{0};o< M;o+=SKIP){
 		double Rg{0};
 		ae_int_t basisFuncs{2};
@@ -65,11 +60,24 @@ void SaxsData::Generate(vector<double> & x,vector<double> & y){
 		polynomialbar2pow(p, a2);
 
 		Rg=sqrt(-3.0*a2[1]);
+		I_0.push_back(a2[0]);
 		Rg_s.push_back(Rg);
 		err0.push_back(rep.avgerror);
 	}
 	auto it=std::min_element(err0.begin(),err0.end());
 	Rg=Rg_s[std::distance(err0.begin(),it)];
+	double I0=exp(I_0[std::distance(err0.begin(),it)]);
+
+	this->x=vector<std::pair<double,double>>(x.size());
+//	this->x[0].first=0;
+//	this->x[0].second=I0;
+
+	for(size_t o{0};o<this->x.size();o++){
+		this->x[o].first=x[o];
+		this->x[o].second=y_s[o];
+	}
+	cout << Rg << "  "<< "log(I(0)) " <<I_0[std::distance(err0.begin(),it)]<<endl;
+
 }
 
 std::pair<double,double> & SaxsData::operator [](size_t N){

@@ -18,8 +18,8 @@ struct pickPar{
 			double wei=1.0;
 			energy+=tmp*tmp;
 		}
-		Par=INEN/energy;
-//	Par=100.0;
+//		Par=INEN/energy;
+	Par=1.0;
 	}
 
 };
@@ -39,6 +39,8 @@ Funktionell::Funktionell(abInitioRho::RhoSaxs * ro_out, abInitioRho::RhoSaxs * r
 	Nz=ro_in->getnnz();
 	Rd=co[XX][XX]*2.0/3.5;
 	this->setUpFirst(exp);
+	Rge=exp->getRg();
+	Rge*=Rge;
 }
 void Funktionell::setUpFirst(SaxsData * exp){
 	double m_qcut{this->qcut},m_dq{this->dq};
@@ -88,29 +90,60 @@ void Funktionell::setUpFirst(SaxsData * exp){
 		}
 	}
 }
-double Funktionell::EnergyR(array3<double> & F_r,array3<double> & grad){
+double Funktionell::EnergyR(double & myRg,array3<double> & F_r,array3<double> & gradR){
 	double energy{0};
-	Dvect P=co*Dvect{0.5,0.5,0.5};
 	/* Assume Cell axis are orthogonal */
+	double PotR{0.0};
 	double dx=co[XX][XX]/(double) Nx;
 	double dy=co[YY][YY]/(double) Ny;
 	double dz=co[ZZ][ZZ]/(double) Nz;
-	double R2=Rd*Rd;
-	for(int o{0};o< Nx;o++){
-		double xc=dx*(double)o;
-		for(int p{0};p<Ny;p++){
-			double yc=dy*(double)p;
-			for(int q{0};q<Nz;q++){
-				double zc=dz*(double)q;
-				Dvect grid{xc,yc,zc};
-				if((grid-P).Norm2()>R2){
-					double tmp{F_r[o][p][q]};
-					energy+=Pot*tmp*tmp;
-					grad[o][p][q]+=2.0*Pot*tmp;
-				}
+	Dvect c0;
+	double norm{0};
+	for(size_t o{0};o<Nx;o++)
+		for(size_t p{0};p<Ny;p++)
+			for(size_t q{0};q<Nz;q++){
+				double x0=o*dx;
+				double y0=p*dy;
+				double z0=q*dz;
+				double density=F_r[o][p][q];
+				c0[XX]+=x0*density;
+				c0[YY]+=y0*density;
+				c0[ZZ]+=z0*density;
+				norm+=density;
 			}
-		}
-	}
+	c0/=norm;
+
+	double Rg{0};
+	for(size_t o{0};o<Nx;o++)
+		for(size_t p{0};p<Ny;p++)
+			for(size_t q{0};q<Nz;q++){
+				double x0=o*dx;
+				double y0=p*dy;
+				double z0=q*dz;
+				double x1=c0[XX]-x0;
+				double y1=c0[YY]-y0;
+				double z1=c0[ZZ]-z0;
+				double density=F_r[o][p][q];
+				Rg+=(x1*x1+y1*y1+z1*z1)*density;
+			}
+	Rg/=norm;
+	energy=PotR*(Rge-Rg)*(Rge-Rg);
+	myRg=Rg<0?sqrt(-Rg):sqrt(Rg);
+	double grad{-2.0*PotR*(Rge-Rg)};
+	for(size_t o{0};o<Nx;o++)
+		for(size_t p{0};p<Ny;p++)
+			for(size_t q{0};q<Nz;q++){
+				double x0=o*dx;
+				double y0=p*dy;
+				double z0=q*dz;
+
+				double x1=c0[XX]-x0;
+				double y1=c0[YY]-y0;
+				double z1=c0[ZZ]-z0;
+				double one=x1*x1+y1*y1+z1*z1-Rg;
+				one/=norm;
+				gradR[o][p][q]+=one*grad;
+			}
 
 	return energy;
 }
@@ -167,15 +200,15 @@ double Funktionell::EnergyQ(double & AA_0,double & AA_1,array3<Complex> & F_k){
 	static pickPar Once(Par,A_0,A_1,Iq_exp,Iq_c);
 	Grad=Complex{0,0};
 	energy=0;
+	double scale{1.0/(double) mapIdx.size()};
 	for(auto it=mapIdx.begin();it != mapIdx.end();it++){
 		auto h0=it->first;
+		auto iqe=Iq_exp[h0];
 		auto tmp=(Iq_exp[h0]-Iq_c[h0]*A_0-A_1);
-		//cout << (h0+0.5)*dq<< " " << Iq_exp[h0]<< " " << Iq_c[h0]*A_0+A_1<<endl;
-		double wei=1.0;
+		double wei=scale/iqe;
 		energy+=tmp*tmp*Par*wei;
+
 		double grad=-2.0*Par*wei*tmp*A_0/(double) mapIdx[h0].size();
-		//		dA_0+=-2.0*Par*wei*tmp*Iq_c[h0];
-		//		dA_1+=-2.0*Par*wei*tmp;
 		for(size_t o{0}; o<mapIdx[h0].size();o++){
 			size_t i=mapIdx[h0][o][XX];
 			size_t j=mapIdx[h0][o][YY];
@@ -187,6 +220,69 @@ double Funktionell::EnergyQ(double & AA_0,double & AA_1,array3<Complex> & F_k){
 				Grad[ib][jb][k]+=grad*F_k[ib][jb][k];
 			} else{
 				Grad[i][j][k]+=2.0*grad*F_k[i][j][k];
+			}
+		}
+	}
+//	Grad[0][0][0]=Complex{0,0};
+	F_k=Grad;
+	return energy;
+}
+double Funktionell::EnergyQ(double & AA_0,double & AA_1,array3<Complex> & F_k
+		,array3<Complex> &DGrad){
+	A_0=AA_0;
+	A_1=AA_1;
+	array3<Complex> Grad(nx,ny,nzp,sizeof(Complex));
+	Iq_c.clear();
+	auto InC=Modulus(F_k);
+	Complex vt0{0,0};
+	double energy{0};
+	for(auto it=mapIdx.begin();it != mapIdx.end();it++){
+		const size_t h0=it->first;
+		vector<vector<int>> & vIdx=it->second;
+		for(size_t o{0};o<vIdx.size();o++){
+			int i=vIdx[o][XX];
+			int j=vIdx[o][YY];
+			int k=vIdx[o][ZZ];
+			size_t ib=i==0?0:nx-i;
+			size_t jb=j==0?0:ny-j;
+			if(k != 0 && k != nzp-1){
+				vt0=InC[i][j][k]+InC[ib][jb][k];
+			} else{
+				vt0=InC[i][j][k];
+			}
+			Iq_c[h0]+=vt0.real();
+		}
+		Iq_c[h0]/=static_cast<double>(vIdx.size());
+
+	}
+	static pickPar Once(Par,A_0,A_1,Iq_exp,Iq_c);
+	Grad=Complex{0,0};
+	DGrad=Complex{0,0};
+	energy=0;
+	for(auto it=mapIdx.begin();it != mapIdx.end();it++){
+		auto h0=it->first;
+		auto tmp=(Iq_exp[h0]-Iq_c[h0]*A_0-A_1);
+		double wei=1.0;
+		energy+=tmp*tmp*Par*wei;
+		double dtmp=-2.0*tmp*A_0/(double) mapIdx[h0].size();
+		double ddtmp=-2.0*Par*wei*A_0*A_0/(double) (mapIdx[h0].size()*mapIdx[h0].size());
+		double grad=-2.0*Par*wei*tmp*A_0/(double) mapIdx[h0].size();
+		//		dA_0+=-2.0*Par*wei*tmp*Iq_c[h0];
+		//		dA_1+=-2.0*Par*wei*tmp;
+		for(size_t o{0}; o<mapIdx[h0].size();o++){
+			size_t i=mapIdx[h0][o][XX];
+			size_t j=mapIdx[h0][o][YY];
+			size_t k=mapIdx[h0][o][ZZ];
+			size_t ib=i==0?0:nx-i;
+			size_t jb=j==0?0:ny-j;
+			if(k != 0 && k != nzp-1){
+				auto f_k=F_k[i][j][k];
+				auto f_kb=F_k[ib][jb][k];
+				Grad[i][j][k]+=grad*f_k;
+				Grad[ib][jb][k]+=grad*f_kb;
+			} else{
+				auto f_k=F_k[i][j][k];
+				Grad[i][j][k]+=2.0*grad*f_k;
 			}
 		}
 	}

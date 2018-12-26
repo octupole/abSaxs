@@ -11,6 +11,10 @@ bool RhoSaxs::firstTime=true;
 void RhoSaxs::Density(){
 }
 void RhoSaxs::initDensity(double Rd /* Radius of the sphere not Rg!*/){
+	unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+	std::default_random_engine generator (seed);
+	std::uniform_real_distribution<double> distribution (0.2,1.0);
+
 	try{
 		if(!__check()) throw string("\nCO matrix not initialized.\n");
 		if(this->Size() == 0) throw string("\n Electron density: array not allocated.\n");
@@ -23,7 +27,7 @@ void RhoSaxs::initDensity(double Rd /* Radius of the sphere not Rg!*/){
 	double dx=CO[XX][XX]/(double) this->getnnx();
 	double dy=CO[YY][YY]/(double) this->getnny();
 	double dz=CO[ZZ][ZZ]/(double) this->getnnz();
-	double dens{0.2},Rd2=Rd*Rd;
+	double dens{0.6},Rd2=Rd*Rd;
 	for(int o{0};o< this->getnnx();o++){
 		double xc=dx*(double)o;
 		for(int p{0};p<this->getnny();p++){
@@ -33,7 +37,7 @@ void RhoSaxs::initDensity(double Rd /* Radius of the sphere not Rg!*/){
 				Dvect grid{xc,yc,zc};
 
 				if((grid-P).Norm2() <=Rd2)
-					(*this)[0][o][p][q]=dens;
+				(*this)[0][o][p][q]=distribution(generator);
 
 			}
 		}
@@ -52,7 +56,7 @@ void RhoSaxs::initBarrier( double Pot, double Rd,array3<double> & x){
 	double dx=CO[XX][XX]/(double) this->getnnx();
 	double dy=CO[YY][YY]/(double) this->getnny();
 	double dz=CO[ZZ][ZZ]/(double) this->getnnz();
-	double dens{0.2},Rd2=Rd*Rd;
+	double dens{0.2},Rd2=(Rd+6)*(Rd+6);
 	for(int o{0};o< this->getnnx();o++){
 		double xc=dx*(double)o;
 		for(int p{0};p<this->getnny();p++){
@@ -96,9 +100,14 @@ void RhoSaxs::__setDx(){
 }
 
 void RhoSaxs::copyIn(array3<double> & ro){
+	cout <<" there "<<endl;
+	cout << this->getnnx()<< " "<<endl;;
+	cout << this->getnny()<< " "<<endl;
+	cout << this->getnnz()<< " " <<endl;
 	unsigned int nx=this->getnnx();
 	unsigned int ny=this->getnny();
 	unsigned int nz=this->getnnz();
+	cout<< ro.Nx()<< " "<< ro.Ny()<< " "<< ro.Nz()<< " "<<endl;
 	for(size_t o{0};o<nx;o++)
 		for(size_t p{0};p<ny;p++)
 			for(size_t q{0};q<nz;q++){

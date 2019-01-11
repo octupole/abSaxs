@@ -50,6 +50,7 @@ array3<double> & ExecabSaxs::__Saxs(MAtoms * atm){
 	return MySaxs->getI_r();
 }
 void ExecabSaxs::Run_abSaxs(MAtoms * atm){
+	atm->InertiaRot();
 	this->expSaxs();
 	if(atm){
 		myABSaxs->setUpCell(Exp);

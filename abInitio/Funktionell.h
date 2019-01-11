@@ -60,6 +60,7 @@ public:
 	map<size_t,double> & getIqc(){return Iq_c;};
 	map<size_t,double> & getIqe(){return Iq_exp;};
 	map<size_t,vector<vector<int>>> & getIdx(){return mapIdx;};
+	void scaleIq(array3<Complex> &);
 	void Write();
 	double getMydq(){return dq;};
 	virtual ~Funktionell();

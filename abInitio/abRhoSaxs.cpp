@@ -100,14 +100,9 @@ void RhoSaxs::__setDx(){
 }
 
 void RhoSaxs::copyIn(array3<double> & ro){
-	cout <<" there "<<endl;
-	cout << this->getnnx()<< " "<<endl;;
-	cout << this->getnny()<< " "<<endl;
-	cout << this->getnnz()<< " " <<endl;
 	unsigned int nx=this->getnnx();
 	unsigned int ny=this->getnny();
 	unsigned int nz=this->getnnz();
-	cout<< ro.Nx()<< " "<< ro.Ny()<< " "<< ro.Nz()<< " "<<endl;
 	for(size_t o{0};o<nx;o++)
 		for(size_t p{0};p<ny;p++)
 			for(size_t q{0};q<nz;q++){

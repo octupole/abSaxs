@@ -67,6 +67,7 @@ class ABSaxs {
 	array3<Complex> DGrad;
 	real_1d_array dgrad;
 	array3<double> F_r;
+	array3<double> Grad0;
 	array3<double> GradR;
 
 	array3<Complex> I_k;
@@ -88,7 +89,7 @@ public:
 	void setUpCell(SaxsData *);
 	void setUpRho(SaxsData *);
 	void setUpRho(SaxsData *,array3<double> &);
-
+	void getGrad0();
 	void Run();
 	void testDensity(array3<double> &);
 	void fitSaxs(map<size_t,double> &, map<size_t,double> &);

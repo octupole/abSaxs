@@ -145,6 +145,7 @@ public:
 	} ax;
 	template <Enums::myWriteOptions OPT>
 	void Gyro();
+	void InertiaRot();
 	vector<Gyration<T>*> & getRg_i(){return Rg_i;};
 	const vector<int> & getTypeNo() const {return TypeNo;}
 	vector<int> & getIndx(){return *ResIndx0;}

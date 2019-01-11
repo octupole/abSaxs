@@ -93,7 +93,7 @@ void Funktionell::setUpFirst(SaxsData * exp){
 double Funktionell::EnergyR(double & myRg,array3<double> & F_r,array3<double> & gradR){
 	double energy{0};
 	/* Assume Cell axis are orthogonal */
-	double PotR{0.0};
+	double PotR{0.2};
 	double dx=co[XX][XX]/(double) Nx;
 	double dy=co[YY][YY]/(double) Ny;
 	double dz=co[ZZ][ZZ]/(double) Nz;
@@ -161,7 +161,7 @@ void Funktionell::ComputeIqc(array3<Complex> & F_k){
 			size_t ib=i==0?0:nx-i;
 			size_t jb=j==0?0:ny-j;
 			if(k != 0 && k != nzp-1){
-				vt0=InC[i][j][k]+InC[ib][jb][k];
+				vt0=0.5*InC[i][j][k]+0.5*InC[ib][jb][k];
 			} else{
 				vt0=InC[i][j][k];
 			}
@@ -188,14 +188,13 @@ double Funktionell::EnergyQ(double & AA_0,double & AA_1,array3<Complex> & F_k){
 			size_t ib=i==0?0:nx-i;
 			size_t jb=j==0?0:ny-j;
 			if(k != 0 && k != nzp-1){
-				vt0=InC[i][j][k]+InC[ib][jb][k];
+				vt0=0.5*InC[i][j][k]+0.5*InC[ib][jb][k];
 			} else{
 				vt0=InC[i][j][k];
 			}
 			Iq_c[h0]+=vt0.real();
 		}
 		Iq_c[h0]/=static_cast<double>(vIdx.size());
-
 	}
 	static pickPar Once(Par,A_0,A_1,Iq_exp,Iq_c);
 	Grad=Complex{0,0};
@@ -216,8 +215,8 @@ double Funktionell::EnergyQ(double & AA_0,double & AA_1,array3<Complex> & F_k){
 			size_t ib=i==0?0:nx-i;
 			size_t jb=j==0?0:ny-j;
 			if(k != 0 && k != nzp-1){
-				Grad[i][j][k]+=grad*F_k[i][j][k];
-				Grad[ib][jb][k]+=grad*F_k[ib][jb][k];
+				Grad[i][j][k]+=grad*F_k[i][j][k]*0.5;
+				Grad[ib][jb][k]+=grad*F_k[ib][jb][k]*0.5;
 			} else{
 				Grad[i][j][k]+=2.0*grad*F_k[i][j][k];
 			}
@@ -226,6 +225,67 @@ double Funktionell::EnergyQ(double & AA_0,double & AA_1,array3<Complex> & F_k){
 //	Grad[0][0][0]=Complex{0,0};
 	F_k=Grad;
 	return energy;
+}
+void Funktionell::scaleIq(array3<Complex> & F_k){
+	array3<Complex> Grad(nx,ny,nzp,sizeof(Complex));
+	Iq_c.clear();
+	auto InC=Modulus(F_k);
+	Complex vt0{0,0};
+	double energy{0};
+	for(auto it=mapIdx.begin();it != mapIdx.end();it++){
+		const size_t h0=it->first;
+		vector<vector<int>> & vIdx=it->second;
+		for(size_t o{0};o<vIdx.size();o++){
+			int i=vIdx[o][XX];
+			int j=vIdx[o][YY];
+			int k=vIdx[o][ZZ];
+			size_t ib=i==0?0:nx-i;
+			size_t jb=j==0?0:ny-j;
+			if(k != 0 && k != nzp-1){
+				vt0=0.5*(InC[i][j][k]+InC[ib][jb][k]);
+			} else{
+				vt0=InC[i][j][k];
+			}
+			Iq_c[h0]+=vt0.real();
+		}
+		Iq_c[h0]/=static_cast<double>(vIdx.size());
+		auto scale=pow(Iq_exp[h0]/Iq_c[h0],1.0/4);
+		for(size_t o{0};o<vIdx.size();o++){
+			int i=vIdx[o][XX];
+			int j=vIdx[o][YY];
+			int k=vIdx[o][ZZ];
+			size_t ib=i==0?0:nx-i;
+			size_t jb=j==0?0:ny-j;
+			if(k != 0 && k != nzp-1){
+				F_k[i][j][k]*=Complex{scale,0};
+				F_k[ib][jb][k]*=Complex{scale,0};
+			} else{
+				F_k[i][j][k]*=Complex{scale*scale,0};
+			}
+		}
+	}
+	Iq_c.clear();
+	InC=Modulus(F_k);
+	vt0=Complex{0,0};
+	energy=0;
+	for(auto it=mapIdx.begin();it != mapIdx.end();it++){
+		const size_t h0=it->first;
+		vector<vector<int>> & vIdx=it->second;
+		for(size_t o{0};o<vIdx.size();o++){
+			int i=vIdx[o][XX];
+			int j=vIdx[o][YY];
+			int k=vIdx[o][ZZ];
+			size_t ib=i==0?0:nx-i;
+			size_t jb=j==0?0:ny-j;
+			if(k != 0 && k != nzp-1){
+				vt0=0.5*(InC[i][j][k]+InC[ib][jb][k]);
+			} else{
+				vt0=InC[i][j][k];
+			}
+			Iq_c[h0]+=vt0.real();
+		}
+		Iq_c[h0]/=static_cast<double>(vIdx.size());
+	}
 }
 double Funktionell::EnergyQ(double & AA_0,double & AA_1,array3<Complex> & F_k
 		,array3<Complex> &DGrad){
@@ -246,7 +306,7 @@ double Funktionell::EnergyQ(double & AA_0,double & AA_1,array3<Complex> & F_k
 			size_t ib=i==0?0:nx-i;
 			size_t jb=j==0?0:ny-j;
 			if(k != 0 && k != nzp-1){
-				vt0=InC[i][j][k]+InC[ib][jb][k];
+				vt0=0.5*InC[i][j][k]+0.5*InC[ib][jb][k];
 			} else{
 				vt0=InC[i][j][k];
 			}
@@ -276,8 +336,8 @@ double Funktionell::EnergyQ(double & AA_0,double & AA_1,array3<Complex> & F_k
 			size_t ib=i==0?0:nx-i;
 			size_t jb=j==0?0:ny-j;
 			if(k != 0 && k != nzp-1){
-				auto f_k=F_k[i][j][k];
-				auto f_kb=F_k[ib][jb][k];
+				auto f_k=F_k[i][j][k]*0.5;
+				auto f_kb=F_k[ib][jb][k]*0.5;
 				Grad[i][j][k]+=grad*f_k;
 				Grad[ib][jb][k]+=grad*f_kb;
 			} else{

@@ -437,6 +437,48 @@ void Atoms<T>::CalcGyro(vector<double> & massa,vector<Gyration<T>*> & Rg){
 
 }
 template <typename T>
+void Atoms<T>::InertiaRot(){
+	Dvect cmG{0};
+	double unit_nmm2=1.0/(unit_nm*unit_nm);
+
+	int ntot=0;
+	for(size_t i=0;i<nr;i++){
+		for(int o1=0;o1<DIM;o1++) cmG[o1]+=x[i][o1];
+		ntot++;
+	}
+	cmG/=static_cast<double> (ntot);
+	Dvect x0;
+	Dvect Gm,Im,axis;
+	Matrix Giner{0};
+	Matrix ei,ei2;
+	double MyRg=0;
+	int oa=0;
+	for(size_t nn=0;nn<nr;nn++){
+		for(int o1=0;o1<DIM;o1++) x0[o1]=cmG[o1]-x[nn][o1];
+		Giner+=x0%x0*unit_nmm2;
+	}
+	Giner/=static_cast<double> (ntot);
+	cout << Giner<<endl;
+
+	int nrot;
+	Jacob<T>()(Giner,Gm,ei,nrot);
+	cout << Gm<<endl;
+	cout << ei<<endl;
+	for(int o{0};o<nr;o++){
+		Dvect tmp;
+		tmp=ei.Transpose()*x[o];
+		x[o]=tmp;
+	}
+	for(auto ia=0;ia<nr;ia++){
+		for(int o=0;o<DIM;o++){
+			xa[ia][o]=Mt.getOC()[o][XX]*x[ia][XX]+Mt.getOC()[o][YY]*x[ia][YY]+Mt.getOC()[o][ZZ]*x[ia][ZZ];
+		}
+	}
+
+}
+
+
+template <typename T>
 template<Enums::myWriteOptions OPT>
 void Atoms<T>::Gyro(){
 	vector<vector<int> >  mCluster=Perco->getCluster();

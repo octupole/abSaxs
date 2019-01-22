@@ -156,7 +156,10 @@ void ABSaxs::minLBFGS(const real_1d_array &x, double & energy, real_1d_array &gr
 	cout << std::scientific;
 	cout << "Step "<< NN++<< " Energy = "<<energy << " Grad = " << fabs(msd)
 			<<" Rg = "<< std::fixed<<myRg<<endl;
-	if(NN >1500) minlbfgsrequesttermination(state);
+	if(NN >1500) {
+		cout << "Exit now" <<endl;
+		minlbfgsrequesttermination(state);
+	}
 }
 void ABSaxs::minLBFGS_C(const real_1d_array &x, double & energy, real_1d_array &grad, void *ptr){
 	size_t M{0};
@@ -237,8 +240,8 @@ void ABSaxs::getGrad0(){
 //				}else{
 					if(q > Max0 || q < Min0)
 						Grad0[o][p][q]=0.0;
-//				}
-			}
+				}
+//			}
 //	for(size_t o{0};o<nx;o++)
 //		for(size_t p{0};p<ny;p++)
 //			for(size_t q{0};q<nz;q++){
@@ -248,10 +251,11 @@ void ABSaxs::getGrad0(){
 
 }
 void ABSaxs::Minimize(){
-    double epsg = 0.01;
+	cout << "hello"<<endl;
+    double epsg = 0.001;
     double epsf = 0;
     double epsx = 0;
-    ae_int_t maxits = 0;
+    ae_int_t maxits = 2000;
 
     minlbfgsreport rep;
 	real_1d_array x0,grad;
@@ -283,8 +287,8 @@ void ABSaxs::Minimize(){
 	dq=myFuncx->getMydq();
 
 	this->fitSaxs(Iqe,Iqc);
-	A_0=1;
-	A_1=0;
+//	A_0=1;
+//	A_1=0;
 
 	Rho_s->copyOut(F_r);
 	this->subtract(F_r);
@@ -308,6 +312,7 @@ void ABSaxs::Minimize(){
 	(*Rho_s)=0;
 	this->_radius();
     Rho_s->copyIn(F_r);
+    Rho_s->setNx(Nx,Ny,Nz);
     Rho_s->WriteIt();
 
     myFuncx->Write();

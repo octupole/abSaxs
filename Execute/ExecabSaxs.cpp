@@ -17,14 +17,18 @@ ExecabSaxs::ExecabSaxs(trj::TrjRead & MyIn, Topol_NS::Topol & Top0): Top{&Top0} 
 	if(MyOrder>1) Rho_ex=new RhoSaxsLI;
 	else Rho_ex=new RhoSaxs;
 	MySaxs=new Saxs(MyOrder,Myd,Mycut);
+	cout << "hello 0"<<endl;
 	nx=MyIn.gnnx();
 	ny=MyIn.gnny();
 	nz=MyIn.gnnz();
+	cout << "hello 1"<<endl;
 	MySaxs->Allocate(nx,ny,nz);
 	auto fileDens=MyIn.gfiledens();
 	myDens=MyIn.gModeCompute();
 	myDensAvg=MyIn.gMyDensAvg();
+	cout << "hello 2"<<endl;
 	MySaxs->setDens(myDensAvg,fileDens,myDens);
+	cout << "hello 3"<<endl;
 }
 void ExecabSaxs::__SuperCell(){
 	MySaxs->setSuperCell0(CO[XX][XX]/co[XX][XX]);
@@ -72,6 +76,7 @@ void ExecabSaxs::expSaxs(){
 	vector<double> x,y,y_s;
 	double x0,y0,z0;
 	std::string line;
+	cout << "Ippa"<<endl;
 	try{
 		while (getline(*ExIn, line)) {
 			if(std::string{"#%"}.find(line.substr(0,1)) != std::string::npos)
@@ -88,7 +93,9 @@ void ExecabSaxs::expSaxs(){
 		cout << s <<endl;
 		exit(1);
 	}
+	cout << "Ippa"<<endl;
 	Exp=new SaxsData(x,y);
+	cout << "Ippa"<<endl;
 	vector<std::pair<double,double>> & myExp=Exp->gIq_exp();
 }
 ExecabSaxs::~ExecabSaxs() {

@@ -121,11 +121,14 @@ void RhoSaxs::copyOut(array3<double> & ro){
 }
 void RhoSaxs::WriteIt(){
 	double dvol=static_cast<float>(dx*dy*dz);
-	unsigned int nx=this->getnnx();
-	unsigned int ny=this->getnny();
-	unsigned int nz=this->getnnz();
+	unsigned int mx=this->getnnx();
+	unsigned int my=this->getnny();
+	unsigned int mz=this->getnnz();
+	Nx=Nx==0?mx:Nx;
+	Ny=Ny==0?my:Ny;
+	Nz=Nz==0?mz:Nz;
 	float x[3], a, v[3], rMin = 0.5, rMax = 1., deltaRad, deltaZ;
-	int dims[3]={static_cast<int>(nx),static_cast<int>(ny),static_cast<int>(nz)};
+	int dims[3]={static_cast<int>(Nx),static_cast<int>(Ny),static_cast<int>(Nz)};
 	  // Create the structured grid.
 	vtkStructuredGrid *sgrid = vtkStructuredGrid::New();
  	sgrid->SetDimensions(dims);
@@ -139,13 +142,13 @@ void RhoSaxs::WriteIt(){
 	vtkFloatArray *scalars = vtkFloatArray::New();
 	scalars->Allocate(dims[0]*dims[1]*dims[2]);
 	scalars->SetName("density");
-	for (size_t k{0}; k < nz; k++) {
+	for (size_t k{0}; k < Nz; k++) {
 		x[ZZ]=dz*k;
-		int kOffset = k*nx*ny;
-	    for (size_t j{0}; j<ny; j++) {
-	    	int jOffset = j * nx;
+		int kOffset = k*Nx*Ny;
+	    for (size_t j{0}; j<Ny; j++) {
+	    	int jOffset = j * Nx;
 			x[YY]=dy*j;
-	    	for (size_t i{0}; i<nx; i++) {
+	    	for (size_t i{0}; i<Nx; i++) {
 	    		int offset = i + jOffset + kOffset;
 	    		x[XX]=dx*i;
 

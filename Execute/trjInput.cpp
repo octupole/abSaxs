@@ -34,11 +34,11 @@ trjInput::trjInput(int ntot,char ** v) {
 	Usage[M++]="\t -dens <string select='R'> <int order=4> <int avg=2>\n"
 			"\t\t Compute electron density instead of SAXS. select=[i++] R compute on R-space\n "
 			"\t\t Q compute it from Q-space; order is the Lagrangian order; avg is how many bins\n"
-			"\t\t are averaged\n";
+			"\t\t are averaged\n\n";
 	Usage[M++]="\t -pdb <string filename>\n"
 			"\t\tInput a PDB file containing the entire system investigated. This input file \n "
-			"\t\tis required when computing the SAXS intensity of the solvated protein or of the buffer. From this\n"
-			"\t\tfile the topology of the system is extracted.\n";
+			"\t\tis required when computing the SAXS intensity of the solvated protein \n"
+			"\t\tor of the buffer. From this file the topology of the system is extracted.\n";
 
 	int n=1;
 	string key;

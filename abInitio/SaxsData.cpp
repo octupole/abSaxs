@@ -29,11 +29,13 @@ void SaxsData::Generate(vector<double> & x,vector<double> & y){
 
 	for( auto x0: x){
 		if(x0 <= qcut) regrMax++;
+		cout << x0<<endl;
 	}
 	size_t mm{regrMax};
 
-	int M{(int) mm-SEGM};
+	int M=mm<SEGM?1:(int) mm-SEGM;
 	int Mtime{M/SKIP};
+	cout << "Ippa 2 "<< M <<endl;
 
 	vector<double> I_0,Rg_s,err0;
 	for(int o{0};o< M;o+=SKIP){
@@ -63,7 +65,10 @@ void SaxsData::Generate(vector<double> & x,vector<double> & y){
 		I_0.push_back(a2[0]);
 		Rg_s.push_back(Rg);
 		err0.push_back(rep.avgerror);
+		cout << rep.avgerror<<endl;
 	}
+	cout << "Ippa 3"<<endl;
+
 	auto it=std::min_element(err0.begin(),err0.end());
 	Rg=Rg_s[std::distance(err0.begin(),it)];
 	double I0=exp(I_0[std::distance(err0.begin(),it)]);

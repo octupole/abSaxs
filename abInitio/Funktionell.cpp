@@ -19,6 +19,7 @@ struct pickPar{
 			energy+=tmp*tmp;
 		}
 //		Par=INEN/energy;
+	Par=1.0/Ie[Ie.begin()->first];
 	Par=1.0;
 	}
 
@@ -171,8 +172,10 @@ void Funktionell::ComputeIqc(array3<Complex> & F_k){
 	}
 }
 double Funktionell::EnergyQ(double & AA_0,double & AA_1,array3<Complex> & F_k){
+	A_1=0;
 	A_0=AA_0;
-	A_1=AA_1;
+//	A_0=AA_0;
+//	A_1=AA_1;
 	array3<Complex> Grad(nx,ny,nzp,sizeof(Complex));
 	Iq_c.clear();
 	auto InC=Modulus(F_k);
@@ -222,7 +225,7 @@ double Funktionell::EnergyQ(double & AA_0,double & AA_1,array3<Complex> & F_k){
 			}
 		}
 	}
-//	Grad[0][0][0]=Complex{0,0};
+	Grad[0][0][0]=Complex{0,0};
 	F_k=Grad;
 	return energy;
 }
